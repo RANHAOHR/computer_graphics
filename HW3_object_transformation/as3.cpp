@@ -262,9 +262,9 @@ void  display(void)
     printf("Look at camera point: %f, %f, %f\n", p_0.x, p_0.y, p_0.z);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-
     if (toggle)
     {
+      //world frame
       glColor3f(0,0,1);
         glBegin(GL_LINES);
           glVertex3f(0, 0, 0);
@@ -277,109 +277,33 @@ void  display(void)
           glVertex3f(y_axis.x,y_axis.y,y_axis.z); 
         glEnd();
 
-
         glColor3f(1,0,0);
         glBegin(GL_LINES);
           glVertex3f(0, 0, 0);
           glVertex3f(z_axis.x,z_axis.y,z_axis.z); 
         glEnd();
 
+        //object frame
+
     }
 
-    if(object_code == 0){
+    std::string object_ = "teapot.obj";
+    int sign = -1;
+    meshReader (object_.c_str(), sign); // read the file first
 
-      p_ref.x = 0.0;
-      p_ref.y = 0.0;
-      p_ref.z = 0.0;
-      printf("Draw a blue tetraheadron\n");
-
-      glm::vec3 v1(0.0,1.6,0.0);
-      glm::vec3 v2(0.8,-0.4,0.8);
-      glm::vec3 v3(-0.8,-0.4,0.8);
-      glm::vec3 v4(0.0,-0.4,-0.8);
-
-        glColor3f(0,0,1);
-        glBegin(GL_TRIANGLES);
-          glVertex3f(v1.x,v1.y,v1.z);
-          glVertex3f(v2.x,v2.y,v2.z);
-          glVertex3f(v3.x,v3.y,v3.z); 
-
-          glVertex3f(v1.x,v1.y,v1.z);
-          glVertex3f(v2.x,v2.y,v2.z);
-          glVertex3f(v4.x,v4.y,v4.z);       
-
-          glVertex3f(v1.x,v1.y,v1.z);
-          glVertex3f(v4.x,v4.y,v4.z);
-          glVertex3f(v3.x,v3.y,v3.z);   
-
-          glVertex3f(v3.x,v3.y,v3.z);
-          glVertex3f(v2.x,v2.y,v2.z);
-          glVertex3f(v4.x,v4.y,v4.z);   
-        glEnd();
-        glFlush();
-
-    }else if( object_code == 1 ){     // second object .............
-      std::string object_ = "sphere.obj";
-      int sign = -1;
-      meshReader (object_.c_str(), sign); // read the file first
-
-      p_ref.x = center_x;
-      p_ref.y = center_y;
-      p_ref.z = center_z;
-
-      printf("Render a sphere\n");
-
-      for (int i = 0; i < faces; ++i)
-      {
-        glColor3f(1,0,0);  
-        glBegin(GL_POLYGON);
-            glVertex3f(vertList[faceList[i].v1].x, vertList[faceList[i].v1].y, vertList[faceList[i].v1].z);
-            glVertex3f(vertList[faceList[i].v2].x, vertList[faceList[i].v2].y, vertList[faceList[i].v2].z);
-            glVertex3f(vertList[faceList[i].v3].x, vertList[faceList[i].v3].y, vertList[faceList[i].v3].z);
-        glEnd();
-      }
-
-
-    }else if( object_code == 2){  // third object........
-      std::string object_ = "teapot.obj";
-      int sign = -1;
-      meshReader (object_.c_str(), sign); // read the file first
-
-      p_ref.x = center_x;
-      p_ref.y = center_y;
-      p_ref.z = center_z;
-      printf("Render a teapot\n");
-      for (int i = 0; i < faces; ++i)
-      {
-        glColor3f(1,0,0);  
-        glBegin(GL_POLYGON);
-            glVertex3f(vertList[faceList[i].v1].x, vertList[faceList[i].v1].y, vertList[faceList[i].v1].z);
-            glVertex3f(vertList[faceList[i].v2].x, vertList[faceList[i].v2].y, vertList[faceList[i].v2].z);
-            glVertex3f(vertList[faceList[i].v3].x, vertList[faceList[i].v3].y, vertList[faceList[i].v3].z);
-        glEnd();
-      }
-    }else if(object_code == 3){ // 4th object ..............
-
-      std::string object_ = "gallbladder_s.obj";
-      int sign = -1;
-      meshReader (object_.c_str(), sign); // read the file first
-
-      p_ref.x = center_x;
-      p_ref.y = center_y;
-      p_ref.z = center_z;
-      printf("Render a gallbladder_s\n");
-
-      for (int i = 0; i < faces; ++i)
-      {
-        glColor3f(1,0,0);  
-        glBegin(GL_POLYGON);
-            glVertex3f(vertList[faceList[i].v1].x, vertList[faceList[i].v1].y, vertList[faceList[i].v1].z);
-            glVertex3f(vertList[faceList[i].v2].x, vertList[faceList[i].v2].y, vertList[faceList[i].v2].z);
-            glVertex3f(vertList[faceList[i].v3].x, vertList[faceList[i].v3].y, vertList[faceList[i].v3].z);
-        glEnd();
-      }
-
-  } //end of object_3
+    p_ref.x = center_x;
+    p_ref.y = center_y;
+    p_ref.z = center_z;
+    printf("Render a teapot\n");
+    for (int i = 0; i < faces; ++i)
+    {
+      glColor3f(1,0,0);  
+      glBegin(GL_POLYGON);
+          glVertex3f(vertList[faceList[i].v1].x, vertList[faceList[i].v1].y, vertList[faceList[i].v1].z);
+          glVertex3f(vertList[faceList[i].v2].x, vertList[faceList[i].v2].y, vertList[faceList[i].v2].z);
+          glVertex3f(vertList[faceList[i].v3].x, vertList[faceList[i].v3].y, vertList[faceList[i].v3].z);
+      glEnd();
+    }
 
     // (Note that the origin is lower left corner)
     // (Note also that the window spans (0,1) )
@@ -518,9 +442,6 @@ void  keyboard(unsigned char key, int x, int y)
           // switch from orthogonal to perspective
           toggle = true;
         }
-      break;
-    case 's':
-      object_code = ( object_code + 1 ) % 4;
       break;
     case 'q':    
      exit(1);
