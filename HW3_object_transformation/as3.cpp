@@ -20,12 +20,13 @@
 // Global variables
 int window_width, window_height;    // Window dimensions
 int PERSPECTIVE = ON;
-int object_code = 0;
-bool right_coord_system = true;
-glm::vec3 p_0,p_ref,normal_, delta_normal_;
 
-float delta_l = 0.02;
-float delta_angle = 0.02;
+glm::vec3 p_0,p_ref, delta_normal_;
+glm::mat4 M_VW, M_VO, M_WO;
+
+//GLOBAL USED VALUES
+float delta_t = 0.1;
+float delta_r = 0.1;
 bool right_pressed;
 bool left_pressed;
 
@@ -33,11 +34,8 @@ int last_x;
 int last_y;
 glm::vec3 last_x_axis(1,0,0);
 
-int center_x =0;
-int center_y =0;
-int center_z =0;
-
 bool toggle = true;
+
 // Vertex and Face data structure sued in the mesh reader
 // Feel free to change them
 typedef struct _point {
@@ -58,25 +56,12 @@ glm::vec3 x_axis(1,0,0);
 glm::vec3 y_axis(0,1,0);
 glm::vec3 z_axis(0,0,1);
 
-void initialize(){
-  p_0.x = 0.297884;
-  p_0.y = 1.715014;
-  p_0.z = -5;
-
-  p_ref.x = 0;
-  p_ref.y = 0;
-  p_ref.z = 0;
-
-  normal_ = p_0 - p_ref;
-  normal_ = glm::normalize(normal_);
-  delta_normal_ = delta_l * normal_;
-  printf("normal_ is %f, %f, %f\n", delta_normal_.x,delta_normal_.y, delta_normal_.z);
-
+/* utility functions */
+float norm(glm::vec3& vec_){
+  return sqrt(vec_.x * vec_.x + vec_.y * vec_.y + vec_.z * vec_.z );
 }
 
-
-
-glm::mat3 rotate_(float& angle_, float x, float y, float z){
+glm::mat4 rotate_(float& angle_, float x, float y, float z){
 
   glm::mat3 w_hat(0,-z,y,z,0,-x,-y,x,0);
   glm::mat3 I( 1.0f );
@@ -99,9 +84,83 @@ glm::mat3 rotate_(float& angle_, float x, float y, float z){
     }
   }
 
-  return I + R_1 + R_2;
+  glm::mat3 rot_ = I + R_1 + R_2;
+  glm::mat4 R_(rot_[0][0],rot_[0][1],rot_[0][2],0,rot_[1][0],rot_[1][1],rot_[1][2],0,rot_[2][0],rot_[2][1],rot_[2][2],0,0,0,0,1);
+  return R_;
 }
 
+glm::mat4 translate_(float x, float y, float z){
+  glm::mat4 T_(1,0,0,x, 0,1,0,y, 0,0,1,z, 0,0,0,1);
+  return T_;
+}
+
+glm::mat4 scale_(float s){
+  glm::mat4 S_(s,0,0,0, 0,s,0,0, 0,0,s,0, 0,0,0,1);
+  return S_;
+}
+
+glm::vec4 mat_vec(glm::mat4& mat_, glm::vec4& vec_){
+  float v1 = mat_[0][0] * vec_[0] + mat_[0][1] * vec_[1] + mat_[0][2] * vec_[2] + mat_[0][3] * vec_[3];
+  float v2 = mat_[1][0] * vec_[0] + mat_[1][1] * vec_[1] + mat_[1][2] * vec_[2] + mat_[1][3] * vec_[3];
+  float v3 = mat_[2][0] * vec_[0] + mat_[2][1] * vec_[1] + mat_[2][2] * vec_[2] + mat_[2][3] * vec_[3];
+
+  return glm::vec4(v1, v2, v3, 1);
+}
+void transform_world(){
+
+  for (int i = 0; i < 4; ++i)
+  {
+    printf("M_WO %f,%f,%f, %f\n", M_VO[i][0], M_VO[i][1], M_VO[i][2], M_VO[i][3] );
+  }
+  for (int i = 0; i < verts; ++i)
+  {
+    glm::vec4 v_(vertList[i].x,vertList[i].y,vertList[i].z, 1);
+    // printf("v_ %f,%f,%f\n", v_.x, v_.y, v_.z );
+    glm::vec4 v__ = mat_vec(M_VO, v_);
+    // printf("v__ %f,%f,%f\n", v__.x, v__.y, v__.z);
+    vertList[i].x = v__.x;
+    vertList[i].y = v__.y;
+    vertList[i].z = v__.z;
+  }
+
+}
+
+void initialize(){
+  p_0.x = 0;
+  p_0.y = 0;
+  p_0.z = -5;
+
+  p_ref.x = 0;
+  p_ref.y = 0;
+  p_ref.z = 0;
+
+  glm::vec3 n_ = p_0 - p_ref;
+  n_ = glm::normalize(n_);
+
+  glm::vec3 V(0,1,0); //ususally y-axis of world
+
+  glm::vec3 u_ = glm::cross(V, n_);
+
+  u_ = glm::normalize(u_);
+
+  glm::vec3 v_ = glm::cross(n_, u_);
+
+  glm::mat4 T_;//default is identity
+  T_[0][3] = -p_0.x;
+  T_[1][3] = -p_0.y;
+  T_[2][3] = -p_0.z;
+  
+  glm::mat4 R_(u_[0],u_[1],u_[2],0, v_[0],v_[1],v_[2],0, n_[0],n_[1],n_[2],0, 0,0,0,1);
+
+  M_VW = R_ * T_;
+  for (int i = 0; i < 4; ++i)
+  {
+    printf("M_VW %f,%f,%f, %f\n", M_VW[i][0], M_VW[i][1], M_VW[i][2], M_VW[i][3] );
+  }
+
+  M_VO = M_VW * M_WO; //M_WO is intialize as identity when defined
+
+}
 
 void meshReader (const char *filename,int sign)
 {
@@ -149,10 +208,6 @@ void meshReader (const char *filename,int sign)
   fp = fopen(filename, "r");
 
   // Read the veritces
-  int totla_x = 0;
-  int totla_y = 0;
-  int totla_z = 0;
-
   for(i = 0;i < verts;i++)
     {
       fscanf(fp,"%c %f %f %f\n",&letter,&x,&y,&z);
@@ -160,14 +215,7 @@ void meshReader (const char *filename,int sign)
       vertList[i].y = y;
       vertList[i].z = z;
 
-      totla_x += x;
-      totla_y += y;
-      totla_z += z;
     }
-
-    center_x = totla_x / verts; // get the center of the object
-    center_y = totla_y / verts;    
-    center_z = totla_z / verts;
 
   // Read the faces
   for(i = 0;i < faces;i++)
@@ -254,46 +302,75 @@ void  display(void)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(-1.5, 1.5, -1.5,  1.5, -10000, 10000);
-    glutSetWindowTitle("Assignment 2 Template (orthogonal)");
+    glutSetWindowTitle("Assignment 3 Template (orthogonal)");
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
   }
-    gluLookAt(p_0.x, p_0.y, p_0.z, p_ref.x, p_ref.y, p_ref.z, 0, 1, 0);
+    gluLookAt(p_0.x, p_0.y, p_0.z, p_ref.x, p_ref.y, p_ref.z, 0, 1, 0); //this should not change
     printf("Look at camera point: %f, %f, %f\n", p_0.x, p_0.y, p_0.z);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+  for (int i = 0; i < 4; ++i)
+  {
+    printf("M_VO %f,%f,%f, %f\n", M_VO[i][0], M_VO[i][1], M_VO[i][2], M_VO[i][3] );
+  }
+
+
     if (toggle)
     {
+
+      glm::vec3 xw_(M_VW[0][0],M_VW[1][0],M_VW[2][0]);
+      glm::vec3 yw_(M_VW[0][1],M_VW[1][1],M_VW[2][1]);
+      glm::vec3 zw_(M_VW[0][2],M_VW[1][2],M_VW[2][2]);
       //world frame
       glColor3f(0,0,1);
         glBegin(GL_LINES);
-          glVertex3f(0, 0, 0);
-          glVertex3f(x_axis.x,x_axis.y,x_axis.z); 
+          glVertex3f(M_VW[0][3], M_VW[1][3], M_VW[2][3]);
+          glVertex3f(M_VW[0][3] + xw_.x, M_VW[1][3] +xw_.y, M_VW[2][3]+xw_.z); 
         glEnd();
 
         glColor3f(0,1,0);
         glBegin(GL_LINES);
-          glVertex3f(0, 0, 0);
-          glVertex3f(y_axis.x,y_axis.y,y_axis.z); 
+          glVertex3f(M_VW[0][3], M_VW[1][3], M_VW[2][3]);
+          glVertex3f(M_VW[0][3] + yw_.x, M_VW[1][3] +yw_.y, M_VW[2][3]+yw_.z); 
         glEnd();
 
         glColor3f(1,0,0);
         glBegin(GL_LINES);
-          glVertex3f(0, 0, 0);
-          glVertex3f(z_axis.x,z_axis.y,z_axis.z); 
+          glVertex3f(M_VW[0][3], M_VW[1][3], M_VW[2][3]);
+          glVertex3f(M_VW[0][3] + zw_.x, M_VW[1][3] +zw_.y, M_VW[2][3]+zw_.z); 
+        glEnd();
+        glFlush();
+        
+        //object frame
+        glm::vec3 x_(M_VO[0][0],M_VO[1][0],M_VO[2][0]);
+        glm::vec3 y_(M_VO[0][1],M_VO[1][1],M_VO[2][1]);
+        glm::vec3 z_(M_VO[0][2],M_VO[1][2],M_VO[2][2]);
+        printf("x %f, %f, %f\n", x_.x,x_.y,x_.z);
+        printf("y %f, %f, %f\n", y_.x,y_.y,y_.z);
+        printf("z %f, %f, %f\n", z_.x,z_.y,z_.z);
+       glColor3f(0,0,1);
+        glBegin(GL_LINES);
+          glVertex3f(M_VO[0][3], M_VO[1][3], M_VO[2][3]);
+          glVertex3f(x_.x + M_VO[0][3],x_.y + M_VO[1][3], x_.z + M_VO[2][3]); 
         glEnd();
 
-        //object frame
+        glColor3f(0,1,0);
+        glBegin(GL_LINES);
+          glVertex3f(M_VO[0][3], M_VO[1][3], M_VO[2][3]);
+          glVertex3f(y_.x+ M_VO[0][3], y_.y+ M_VO[1][3], y_.z+ M_VO[2][3]); 
+        glEnd();
 
+        glColor3f(1,0,0);
+        glBegin(GL_LINES);
+          glVertex3f(M_VO[0][3], M_VO[1][3], M_VO[2][3]);
+          glVertex3f(z_.x+ M_VO[0][3], z_.y+ M_VO[1][3] ,z_.z + M_VO[2][3]); 
+        glEnd();
+        glFlush();
     }
-
-    std::string object_ = "teapot.obj";
-    int sign = -1;
-    meshReader (object_.c_str(), sign); // read the file first
-
-    p_ref.x = center_x;
-    p_ref.y = center_y;
-    p_ref.z = center_z;
+  // printf("before %f,%f,%f\n", vertList[0].x,vertList[0].y, vertList[0].z);
+    transform_world();
+  // printf("after %f,%f,%f\n", vertList[0].x,vertList[0].y, vertList[0].z);
     printf("Render a teapot\n");
     for (int i = 0; i < faces; ++i)
     {
@@ -310,7 +387,6 @@ void  display(void)
     // Finish drawing, update the frame buffer, and swap buffers
     glutSwapBuffers();
 }
-
 
 // This function is called whenever the window is resized. 
 // Parameters are the new dimentions of the window
@@ -338,20 +414,20 @@ void  mouseButton(int button,int state,int x,int y)
 {
     printf("Mouse click at %d %d, button: %d, state %d\n",x,y,button,state);
 
-    if(button == 0){ // clicked left
-      left_pressed = true;
-    }else{
-      left_pressed = false;
-    }
+    // if(button == 0){ // clicked left
+    //   left_pressed = true;
+    // }else{
+    //   left_pressed = false;
+    // }
 
-    if(button == 2){ //click right
-      right_pressed = true;
-    }else{
-      right_pressed = false;
-    }
+    // if(button == 2){ //click right
+    //   right_pressed = true;
+    // }else{
+    //   right_pressed = false;
+    // }
 
-    last_x = x;
-    last_y = y;
+    // last_x = x;
+    // last_y = y;
 
     //update
     display();
@@ -364,58 +440,58 @@ void  mouseMotion(int x, int y)
 {
   printf("Mouse is at %d, %d\n", x,y);
 
-  int delta_x = x - last_x; //horizontal mouse motion
-  int delta_y = y - last_y; //vertial mouse motion
+  // int delta_x = x - last_x; //horizontal mouse motion
+  // int delta_y = y - last_y; //vertial mouse motion
 
-  if(right_pressed){
-    if(delta_y > 0){ // UP a vertial motion: closer
-      p_0 = p_0 - delta_normal_;
-      printf("p_0 is now: %f, %f, %f\n", p_0.x, p_0.y, p_0.z);
-    }else if(delta_y < 0){ // DOWN : further
-      p_0 = p_0 + delta_normal_;
-      printf("p_0 is now: %f, %f, %f\n", p_0.x, p_0.y, p_0.z);
-    }
-  }
-  if(left_pressed){
-    if(delta_x > 0){
+  // if(right_pressed){
+  //   if(delta_y > 0){ // UP a vertial motion: closer
+  //     p_0 = p_0 - delta_normal_;
+  //     printf("p_0 is now: %f, %f, %f\n", p_0.x, p_0.y, p_0.z);
+  //   }else if(delta_y < 0){ // DOWN : further
+  //     p_0 = p_0 + delta_normal_;
+  //     printf("p_0 is now: %f, %f, %f\n", p_0.x, p_0.y, p_0.z);
+  //   }
+  // }
+  // if(left_pressed){
+  //   if(delta_x > 0){
 
-      float delta_ = delta_angle;
-      glm::mat3 rot_z = rotate_(delta_, 0,1,0 );
+  //     float delta_ = delta_angle;
+  //     glm::mat3 rot_z = rotate_(delta_, 0,1,0 );
 
-      p_0 = rot_z * p_0;
+  //     p_0 = rot_z * p_0;
 
-      last_x_axis = rot_z * last_x_axis;
-    }else if(delta_x < 0){
-      float delta_ = -delta_angle;
-      glm::mat3 rot_z = rotate_(delta_, 0,1,0 );
-      p_0 = rot_z * p_0;
+  //     last_x_axis = rot_z * last_x_axis;
+  //   }else if(delta_x < 0){
+  //     float delta_ = -delta_angle;
+  //     glm::mat3 rot_z = rotate_(delta_, 0,1,0 );
+  //     p_0 = rot_z * p_0;
 
-      last_x_axis = rot_z * last_x_axis;
-    }
+  //     last_x_axis = rot_z * last_x_axis;
+  //   }
 
-    if(delta_y > 0){
+  //   if(delta_y > 0){
 
-      float delta_ = delta_angle;
-      glm::mat3 rot_x = rotate_(delta_, last_x_axis[0],last_x_axis[1],last_x_axis[2]);
+  //     float delta_ = delta_angle;
+  //     glm::mat3 rot_x = rotate_(delta_, last_x_axis[0],last_x_axis[1],last_x_axis[2]);
 
-      // for (int i = 0; i < 3; ++i)
-      // {
-      //   printf("%f, %f, %f\n", rot_z[i][0], rot_z[i][1],rot_z[i][2]);
-      // }
+  //     // for (int i = 0; i < 3; ++i)
+  //     // {
+  //     //   printf("%f, %f, %f\n", rot_z[i][0], rot_z[i][1],rot_z[i][2]);
+  //     // }
  
-      p_0 = rot_x * p_0;
-      // printf("1 %f, %f, %f\n", p_0[0], p_0[1],p_0[2]); 
+  //     p_0 = rot_x * p_0;
+  //     // printf("1 %f, %f, %f\n", p_0[0], p_0[1],p_0[2]); 
 
-    }else if(delta_y < 0){
-      float delta_ = -delta_angle;
-      glm::mat3 rot_x = rotate_(delta_, last_x_axis[0],last_x_axis[1],last_x_axis[2]);
-      p_0 = rot_x * p_0;
-    }
+  //   }else if(delta_y < 0){
+  //     float delta_ = -delta_angle;
+  //     glm::mat3 rot_x = rotate_(delta_, last_x_axis[0],last_x_axis[1],last_x_axis[2]);
+  //     p_0 = rot_x * p_0;
+  //   }
 
-  }
+  // }
 
-  last_x = x;
-  last_y = y;
+  // last_x = x;
+  // last_y = y;
 
   //update dispay
   display();
@@ -428,6 +504,10 @@ void  mouseMotion(int x, int y)
 // x and y are the location of the mouse
 void  keyboard(unsigned char key, int x, int y)
 {
+  float dx,dy,dz,dw,ds;
+  glm::mat4 T_;
+  glm::mat4 R_;
+  glm::mat4 S_;
     switch(key) {
     case '':                           /* Quit */
       exit(1);
@@ -442,6 +522,8 @@ void  keyboard(unsigned char key, int x, int y)
           // switch from orthogonal to perspective
           toggle = true;
         }
+      break;
+    case 'c':
       break;
     case 'q':    
      exit(1);
@@ -459,10 +541,97 @@ void  keyboard(unsigned char key, int x, int y)
     break;
     default:
     break;
+    //rigid body transformations
+    case '4': // translate -x in world frame
+      dx = -delta_t;
+      T_ = translate_(dx,0,0);
+      M_WO = T_ * M_WO;
+      M_VO = M_VW * M_WO;
+      printf("4 pressed \n");
+      break;
+    case '6': //+x in world
+      dx = delta_t;
+      T_ = translate_(dx,0,0);
+      M_WO = T_ * M_WO;
+      M_VO = M_VW * M_WO;
+      break;
+    case '8': //+y in world
+     dy = delta_t;
+      T_ = translate_(0,dy,0);
+      M_WO = T_ * M_WO;
+      M_VO = M_VW * M_WO;    
+      break;
+    case '2': //-y in world
+      dy = -delta_t;
+      T_ = translate_(0,dy,0);
+      M_WO = T_ * M_WO;
+      M_VO = M_VW * M_WO;   
+     break;
+    case '9': //+z in world
+      dz = delta_t;
+      T_ = translate_(0,0,dz);
+      M_WO = T_ * M_WO;
+      M_VO = M_VW * M_WO;   
+     break;
+    case '1': //-z in world
+      dz = -delta_t;
+      T_ = translate_(0,0,dz);
+      M_WO = T_ * M_WO;
+      M_VO = M_VW * M_WO;  
+      break;
+    case '[': //rotate -x world
+      dw = -delta_r;
+      R_ = rotate_(dw, 1, 0, 0);
+      M_WO = R_ * M_WO;
+      M_VO = M_VW * M_WO; 
+      break;
+    case ']': //rotate +x world
+       dw = delta_r;
+      R_ = rotate_(dw, 1, 0, 0);
+      M_WO = R_ * M_WO;
+      M_VO = M_VW * M_WO;       
+      break;
+    case ';': //rotate +x world
+       dw = -delta_r;
+      R_ = rotate_(dw, 0, 1, 0);
+      M_WO = R_ * M_WO;
+      M_VO = M_VW * M_WO; 
+      break;
+    case ':': //rotate +x world, having trouble denoting this
+       dw = delta_r;
+      R_ = rotate_(dw, 0, 1, 0);
+      M_WO = R_ * M_WO;
+      M_VO = M_VW * M_WO; 
+      break;
+    case '.': //rotate -z world
+       dw = -delta_r;
+      R_ = rotate_(dw, 0, 0, 1);
+      M_WO = R_ * M_WO;
+      M_VO = M_VW * M_WO; 
+      break;
+    case '/': //rotate +z world
+       dw = delta_r;
+      R_ = rotate_(dw, 0, 0, 1);
+      M_WO = R_ * M_WO;
+      M_VO = M_VW * M_WO; 
+      break;
+    case '=': //+scale world
+      ds = 1.1;
+      S_ = scale_(ds);
+      M_WO = S_ * M_WO;
+      M_VO = M_VW * M_WO; 
+      break;
+    case '-': //-scale world
+       ds = 0.9;
+      S_ = scale_(ds);
+      M_WO = S_ * M_WO;
+      M_VO = M_VW * M_WO; 
+     break;
     }
-    display();
+
     // Schedule a new display event
     glutPostRedisplay();
+    display();
 }
 
 
@@ -471,6 +640,10 @@ int main(int argc, char* argv[])
 {
 
   initialize(); // initial camera view
+
+  std::string object_ = "teapot.obj";
+  int sign = -1;
+  meshReader (object_.c_str(), sign); // read the file first
 
   // Initialize GLUT
   glutInit(&argc, argv);
