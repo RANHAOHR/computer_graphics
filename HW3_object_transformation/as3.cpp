@@ -811,7 +811,7 @@ void  keyboard(unsigned char key, int x, int y)
       M_WO = mat_multiplication(R_, M_WO);
       M_VO = mat_multiplication(M_VW, M_WO);
       break;
-    case ':': //rotate +y world, having trouble denoting this
+    case '\'': //rotate +y world, having trouble denoting this
       dw = delta_r;
       R_ = rotate_(dw, 0, 1, 0);
       M_WO = mat_multiplication(R_, M_WO);
