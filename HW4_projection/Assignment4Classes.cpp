@@ -70,8 +70,9 @@ void Object::Load(char* file, float s, float rx, float ry, float rz,
 	cout << "Number of faces: " << FaceCount << endl;
 
 	// Load and create the faces and vertices
+	float initi_ = 1000.0;
 	int CurrentVertex = 0, CurrentFace = 0;
-	float MinimumX, MaximumX, MinimumY, MaximumY, MinimumZ, MaximumZ;
+	float MinimumX = initi_, MaximumX = -1* initi_, MinimumY = initi_, MaximumY = -1* initi_, MinimumZ = initi_, MaximumZ = -1* initi_;
 	while(!feof(pObjectFile))
 	{
 		fscanf(pObjectFile, "%c %f %f %f\n", &DataType, &a, &b, &c);
@@ -82,6 +83,35 @@ void Object::Load(char* file, float s, float rx, float ry, float rz,
 			pVertexList[CurrentVertex].z = c;
 
 			//ADD YOUR CODE HERE :Track maximum and minimum coordinates for use in bounding boxes
+			if (a < MinimumX)
+			{
+				MinimumX = a;
+			}
+
+			if (a > MaximumX)
+			{
+				MaximumX = a;
+			}
+
+			if (b < MinimumY)
+			{
+				MinimumY = b;
+			}
+
+			if (b > MaximumY)
+			{
+				MaximumY = b;
+			}
+
+			if (c < MinimumZ)
+			{
+				MinimumZ = c;
+			}
+
+			if (c > MaximumZ)
+			{
+				MaximumZ = c;
+			}
 
 			CurrentVertex++;
 		}
@@ -96,8 +126,40 @@ void Object::Load(char* file, float s, float rx, float ry, float rz,
 	}
 
 	//ADD YOUR CODE HERE: Initialize the bounding box vertices
+	pBoundingBox[0].x = MinimumX;
+	pBoundingBox[0].y = MinimumY;
+	pBoundingBox[0].z = MinimumZ;
+			
+	pBoundingBox[1].x = MinimumX;
+	pBoundingBox[1].y = MaximumY;
+	pBoundingBox[1].z = MinimumZ;
 
-	
+	pBoundingBox[2].x = MaximumX;
+	pBoundingBox[2].y = MaximumY;
+	pBoundingBox[2].z = MinimumZ;
+
+	pBoundingBox[3].x = MaximumX;
+	pBoundingBox[3].y = MinimumY;
+	pBoundingBox[3].z = MinimumZ;
+
+
+	pBoundingBox[4].x = MinimumX;
+	pBoundingBox[4].y = MinimumY;
+	pBoundingBox[4].z = MaximumZ;
+			
+	pBoundingBox[5].x = MinimumX;
+	pBoundingBox[5].y = MaximumY;
+	pBoundingBox[5].z = MaximumZ;
+
+	pBoundingBox[6].x = MaximumX;
+	pBoundingBox[6].y = MaximumY;
+	pBoundingBox[6].z = MaximumZ;
+
+	pBoundingBox[7].x = MaximumX;
+	pBoundingBox[7].y = MinimumY;
+	pBoundingBox[7].z = MaximumZ;
+
+
 	// Apply the initial transformations in order
 	LocalScale(s);
 	WorldRotate((float)(M_PI*rx/180.0), (float)(M_PI*ry/180.0), (float)(M_PI*rz/180.0));
@@ -336,18 +398,61 @@ void Camera::EnforceVectors()
 	v.k = n.i*u.j - n.j*u.i;
 }
 
+// float* mat_multiplication(float* mat_1, float* mat_2){
+//   float mat_[16];
+//   mat_[0] = mat_1[0] * mat_2[0] + mat_1[4] * mat_2[1] + mat_1[8] * mat_2[2] + mat_1[12] * mat_2[3];
+//   mat_[4] = mat_1[0] * mat_2[4] + mat_1[4] * mat_2[5] + mat_1[8] * mat_2[6] + mat_1[12] * mat_2[7];
+//   mat_[8] = mat_1[0] * mat_2[8] + mat_1[4] * mat_2[9] + mat_1[8] * mat_2[10] + mat_1[12] * mat_2[11];
+//   mat_[12] = mat_1[0] * mat_2[12] + mat_1[4] * mat_2[13] + mat_1[8] * mat_2[14] + mat_1[12] * mat_2[15];
+
+//   mat_[1] = mat_1[1] * mat_2[0] + mat_1[5] * mat_2[1] + mat_1[9] * mat_2[2] + mat_1[13] * mat_2[3];
+//   mat_[5] = mat_1[1] * mat_2[4] + mat_1[5] * mat_2[5] + mat_1[9] * mat_2[6] + mat_1[13] * mat_2[7];
+//   mat_[9] = mat_1[1] * mat_2[8] + mat_1[5] * mat_2[9] + mat_1[9] * mat_2[10] + mat_1[13] * mat_2[11];
+//   mat_[13] = mat_1[1] * mat_2[12] + mat_1[5] * mat_2[13] + mat_1[9] * mat_2[14] + mat_1[13] * mat_2[15];
+
+//   mat_[2] = mat_1[2] * mat_2[0] + mat_1[6] * mat_2[1] + mat_1[10] * mat_2[2] + mat_1[14] * mat_2[3];
+//   mat_[6] = mat_1[2] * mat_2[4] + mat_1[6] * mat_2[5] + mat_1[10] * mat_2[6] + mat_1[14] * mat_2[7];
+//   mat_[10] = mat_1[2] * mat_2[8] + mat_1[6] * mat_2[9] + mat_1[10] * mat_2[10] + mat_1[14] * mat_2[11];
+//   mat_[14] = mat_1[2] * mat_2[12] + mat_1[6] * mat_2[13] + mat_1[10] * mat_2[14] + mat_1[14] * mat_2[15];
+
+//   mat_[3] = mat_1[3] * mat_2[0] + mat_1[7] * mat_2[1] + mat_1[11] * mat_2[2] + mat_1[15] * mat_2[3];
+//   mat_[7] = mat_1[3] * mat_2[4] + mat_1[7] * mat_2[5] + mat_1[11] * mat_2[6] + mat_1[15] * mat_2[7];
+//   mat_[11] = mat_1[3] * mat_2[8] + mat_1[7] * mat_2[9] + mat_1[11] * mat_2[10] + mat_1[15] * mat_2[11];
+//   mat_[15] = mat_1[3] * mat_2[12] + mat_1[7] * mat_2[13] + mat_1[11] * mat_2[14] + mat_1[15] * mat_2[15];
+
+//   return mat_;
+// }
 
 // Calculate the new perspective projection matrix
 void Camera::Perspective()
 {
 	//ADD YOUR CODE HERE!!
-	 
+	ProjectionMatrix[0] = 2 * ViewPlane / ViewWidth;
+	ProjectionMatrix[5] = 2 * ViewPlane / ViewHeight;
+	ProjectionMatrix[8] = 0;
+	ProjectionMatrix[9] = 0;
+	ProjectionMatrix[10] = -(NearPlane + FarPlane) / (FarPlane - NearPlane);
+	ProjectionMatrix[11] = -1;	
+	ProjectionMatrix[14] = -2*FarPlane * NearPlane / (FarPlane - NearPlane);	
+
+	ProjectionMatrix[1] = ProjectionMatrix[2] = ProjectionMatrix[3] = ProjectionMatrix[4] = 0;
+	ProjectionMatrix[6] = ProjectionMatrix[7] = ProjectionMatrix[12] = ProjectionMatrix[13] = ProjectionMatrix[15] = 0;
 }
 
 // Calculate the new orthographic projection matrix
 void Camera::Orthographic()
 {
 	//ADD YOUR CODE HERE!!
+	ProjectionMatrix[0] = 2 / ViewWidth;
+	ProjectionMatrix[5] = 2 / ViewHeight;
+	ProjectionMatrix[8] = 0;
+	ProjectionMatrix[9] = 0;	
+	ProjectionMatrix[10] = -2 / (FarPlane - NearPlane);
+	ProjectionMatrix[14] = -(NearPlane + FarPlane) / (FarPlane - NearPlane);
+	ProjectionMatrix[15] = 1;	
+
+	ProjectionMatrix[1] = ProjectionMatrix[2] = ProjectionMatrix[3] = ProjectionMatrix[4] = 0;
+	ProjectionMatrix[6] = ProjectionMatrix[7] = ProjectionMatrix[11] = ProjectionMatrix[12] = ProjectionMatrix[13] = 0;	
 }
 
 // Calculate the new viewing transform matrix

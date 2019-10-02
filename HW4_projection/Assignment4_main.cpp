@@ -51,7 +51,7 @@ void DisplayFunc()
 
 	
 	//MAY WANT TO MODIFY THIS BASED ON ASSIGNMENT REQUIREMENTS
-	gluOrtho2D(-1.1,1.1,-1.1,1.1);
+	gluOrtho2D(-1.0,1.0,-1.0,1.0)
 	
 
 	if(PerspectiveMode)
@@ -167,7 +167,9 @@ void DisplayFunc()
 			//ADD YOUR CODE HERE: Draw the bounding boxes
 
 		} 
-	}
+
+
+	} // end of object list
 
 	glutSwapBuffers();
 }
