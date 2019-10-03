@@ -1,3 +1,0 @@
-/home/ranhao/computer_graphics/HW4_projection/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/ranhao/computer_graphics/HW4_projection/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/ranhao/computer_graphics/HW4_projection/cmake-build-debug/CMakeFiles/HW4_projection.dir

@@ -1,1 +1,0 @@
-/usr/bin/c++  -g   CMakeFiles/HW4_projection.dir/Assignment4_main.cpp.o CMakeFiles/HW4_projection.dir/Assignment4Classes.cpp.o  -o HW4_projection 
