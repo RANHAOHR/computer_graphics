@@ -37,6 +37,7 @@ public:
 	Face* pFaceList;
 	int FaceCount;
 	float ModelMatrix[16];
+
 };
 
 class Scene
