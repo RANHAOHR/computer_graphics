@@ -334,12 +334,12 @@ Camera::Camera()
 	v.i = 0; v.j = 0; v.k = 1;
 	EnforceVectors();
 
-	ViewWidth = 8.0;
-	ViewHeight = 8.0;
+	ViewWidth = 12.0;
+	ViewHeight = 12.0;
 
 	FarPlane = 10.0;
 	NearPlane = 2.0;
-	ViewPlane = 10.0;
+	ViewPlane = 8.0;
 
 	LookAt();
 }

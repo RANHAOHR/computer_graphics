@@ -212,40 +212,30 @@ void DisplayFunc()
             glEnd();
 		} 
 
-
 	} // end of object list
 
 	glutSwapBuffers();
 }
 
-
+// not really accurate from 2d point of view
 bool checkBoxIntersection(Vertex& V_, Vertex* box_vertex,  int vi, int vj, int vk){
 
     printf("box_vertex[0] is %f, %f, %f\n", box_vertex[vi].x, box_vertex[vi].y, box_vertex[vi].z);
     printf("box_vertex[1] is %f, %f, %f\n", box_vertex[vj].x, box_vertex[vj].y, box_vertex[vj].z);
     printf("box_vertex[2] is %f, %f, %f\n", box_vertex[vk].x, box_vertex[vk].y, box_vertex[vk].z);
 
-
-    printf("V_ is %f, %f, %f\n", V_.x, V_.y, V_.z);
-
     Vertex D_, V_1, V_2;
     D_.x = pDisplayCamera->Position.x - box_vertex[vi].x;
     D_.y = pDisplayCamera->Position.y - box_vertex[vi].y;
     D_.z = pDisplayCamera->Position.z - box_vertex[vi].z;
 
-    printf("D_ is %f, %f, %f\n", D_.x, D_.y, D_.z);
-
     V_1.x = box_vertex[vj].x - box_vertex[vi].x;
     V_1.y = box_vertex[vj].y - box_vertex[vi].y;
     V_1.z = box_vertex[vj].z - box_vertex[vi].z;
 
-    printf("V_1 is %f, %f, %f\n", V_1.x, V_1.y, V_1.z);
-
     V_2.x = box_vertex[vk].x - box_vertex[vi].x;
     V_2.y = box_vertex[vk].y - box_vertex[vi].y;
     V_2.z = box_vertex[vk].z - box_vertex[vi].z;
-
-    printf("V_ is %f, %f, %f\n", V_2.x, V_2.y, V_2.z);
 
     float a1 = V_.y * D_.x - V_.x * D_.y;
     float a2 = V_.z * D_.y - V_.y * D_.z;
@@ -259,12 +249,60 @@ bool checkBoxIntersection(Vertex& V_, Vertex* box_vertex,  int vi, int vj, int v
     float u = (a1 * c2 - c1*a2) / (b1 * c2 - b2 * c1) ;
     float v = (a2*b1 -a1 * b2) / (b1 * c2 - b2 * c1);
 
-    float t = (u * V_1.x + v * V_2.x - D_.x) / V_.x;
+    // float t = (u * V_1.x + v * V_2.x - D_.x) / V_.x;
 
     bool collide;
     printf("u is %f\n", u);
     printf("v is %f\n", v);
-    printf("t is %f\n", t);
+
+    if(v >= 0 && u >= 0 && (u+v) <= 1){
+        collide = true;
+        printf("collide is true\n");
+    } else{ collide = false;}
+
+    return collide;
+}
+
+// orthogonal view...
+bool checkBoxIntersection(float xw, float yw, Vertex* box_vertex,  int vi, int vj, int vk){
+
+	Vertex V_; // parallel to n
+	V_.x = pDisplayCamera->n.i;
+	V_.y = pDisplayCamera->n.j;
+	V_.z = pDisplayCamera->n.k;
+
+    printf("box_vertex[0] is %f, %f, %f\n", box_vertex[vi].x, box_vertex[vi].y, box_vertex[vi].z);
+    printf("box_vertex[1] is %f, %f, %f\n", box_vertex[vj].x, box_vertex[vj].y, box_vertex[vj].z);
+    printf("box_vertex[2] is %f, %f, %f\n", box_vertex[vk].x, box_vertex[vk].y, box_vertex[vk].z);
+
+    Vertex D_, V_1, V_2;
+    D_.x = xw - box_vertex[vi].x;
+    D_.y = yw - box_vertex[vi].y;
+    D_.z = -10 - box_vertex[vi].z;
+
+    V_1.x = box_vertex[vj].x - box_vertex[vi].x;
+    V_1.y = box_vertex[vj].y - box_vertex[vi].y;
+    V_1.z = box_vertex[vj].z - box_vertex[vi].z;
+
+    V_2.x = box_vertex[vk].x - box_vertex[vi].x;
+    V_2.y = box_vertex[vk].y - box_vertex[vi].y;
+    V_2.z = box_vertex[vk].z - box_vertex[vi].z;
+
+    float a1 = V_.y * D_.x - V_.x * D_.y;
+    float a2 = V_.z * D_.y - V_.y * D_.z;
+
+    float b1 = V_.y * V_1.x - V_.x * V_1.y;
+    float b2 = V_.z * V_1.y - V_.y * V_1.z;
+
+    float c1 = V_.y * V_2.x - V_.x * V_2.y;
+    float c2 = V_.z * V_2.y - V_.y * V_2.z;
+
+    float u = (a1 * c2 - c1*a2) / (b1 * c2 - b2 * c1) ;
+    float v = (a2*b1 -a1 * b2) / (b1 * c2 - b2 * c1);
+
+    bool collide;
+    printf("u is %f\n", u);
+    printf("v is %f\n", v);
 
     if(v >= 0 && u >= 0 && (u+v) <= 1){
         collide = true;
@@ -292,7 +330,6 @@ void MouseFunc(int button,int state,int x,int y)
     if(button == GLUT_LEFT_BUTTON)
 		MouseLeft = !state;
 
-
 	if(MouseLeft && SelectionMode)
 	{
 		// Select a new object with (x,y) 
@@ -304,8 +341,9 @@ void MouseFunc(int button,int state,int x,int y)
         printf("WindowHeight is %d\n", WindowHeight);
 
         float inverseViewportMatrix[9];
-        inverseViewportMatrix[0] = pDisplayCamera->ViewWidth / WindowWidth;
-        inverseViewportMatrix[4] = -pDisplayCamera->ViewHeight / WindowHeight;
+
+        inverseViewportMatrix[0] = pDisplayCamera->ViewWidth / WindowWidth ; // pDisplayCamera->ViewWidth / WindowWidth;
+        inverseViewportMatrix[4] = -pDisplayCamera->ViewHeight / WindowHeight; // -pDisplayCamera->ViewHeight / WindowHeight;
 
         inverseViewportMatrix[6] = -pDisplayCamera->ViewWidth / 2;
         inverseViewportMatrix[7] = pDisplayCamera->ViewHeight / 2;
@@ -323,36 +361,68 @@ void MouseFunc(int button,int state,int x,int y)
         printf("y_w is %f\n", y_w);
 
         Vertex V_;
-        V_.x = x_w - pDisplayCamera->Position.x;
-        V_.y = y_w - pDisplayCamera->Position.y;
-        V_.z = pDisplayCamera->ViewPlane - pDisplayCamera->Position.z; // -d
-
         Vertex* box_vertex;
         Vertex	temp,temp2;
 
-        for (int i = 0; i < 1; ++i) {
-            //ADD YOUR CODE HERE: Draw the bounding boxes
-            box_vertex = new Vertex[8];
-            for (int j = 0; j < 8; ++j) {
-                box_vertex[j] = pDisplayScene->pObjectList[i].pBoundingBox[j];
-                temp	= Transform(pDisplayScene->pObjectList[i].ModelMatrix,box_vertex[j]);
-                temp2	= Transform(pDisplayCamera->ViewingMatrix,temp);
-                box_vertex[j] = Transform(pDisplayCamera->ProjectionMatrix,temp2);
-            }
+		int select = -1;
+        if (PerspectiveMode)
+        {
+	        V_.x = x_w - pDisplayCamera->Position.x;
+	        V_.y = y_w - pDisplayCamera->Position.y;
+	        V_.z = pDisplayCamera->ViewPlane - pDisplayCamera->Position.z; // -d
 
-            if(checkBoxIntersection(V_, box_vertex,  0, 1, 2) || checkBoxIntersection(V_, box_vertex,  0, 3, 2) ||
-//                    checkBoxIntersection(V_, box_vertex,  4, 7, 6) || checkBoxIntersection(V_, box_vertex,  4, 5, 6) ||
-//                    checkBoxIntersection(V_, box_vertex,  0, 4, 5) || checkBoxIntersection(V_, box_vertex,  0, 1, 5) ||
-//                    checkBoxIntersection(V_, box_vertex,  3, 7, 6) || checkBoxIntersection(V_, box_vertex,  3, 2, 6) ||
-//                    checkBoxIntersection(V_, box_vertex,  1, 5, 6) || checkBoxIntersection(V_, box_vertex,  1, 2, 6) ||
-                    checkBoxIntersection(V_, box_vertex,  0, 4, 7) || checkBoxIntersection(V_, box_vertex,  0, 3, 7)
-                )
-            {
-                SelectedObject = i;
-            } else SelectedObject = -1;
+        	for (int i = 0; i < pDisplayScene->ObjectCount; ++i) {
+	            //ADD YOUR CODE HERE: Draw the bounding boxes
+	            box_vertex = new Vertex[8];
+	            for (int j = 0; j < 8; ++j) {
+	                box_vertex[j] = pDisplayScene->pObjectList[i].pBoundingBox[j];
+	                temp	= Transform(pDisplayScene->pObjectList[i].ModelMatrix,box_vertex[j]);
+	                temp2	= Transform(pDisplayCamera->ViewingMatrix,temp);
+	                box_vertex[j] = Transform(pDisplayCamera->ProjectionMatrix,temp2);
+	            }
+
+	            if(checkBoxIntersection(x_w, y_w, box_vertex,  0, 1, 2) || checkBoxIntersection(x_w, y_w, box_vertex,  0, 3, 2) ||
+	                   checkBoxIntersection(x_w, y_w, box_vertex,  4, 7, 6) || checkBoxIntersection(x_w, y_w, box_vertex,  4, 5, 6) ||
+	                   checkBoxIntersection(V_, box_vertex,  0, 4, 5) || checkBoxIntersection(V_, box_vertex,  0, 1, 5) ||
+	                   checkBoxIntersection(V_, box_vertex,  3, 7, 6) || checkBoxIntersection(V_, box_vertex,  3, 2, 6) ||
+	                   checkBoxIntersection(V_, box_vertex,  1, 5, 6) || checkBoxIntersection(V_, box_vertex,  1, 2, 6) ||
+	                    checkBoxIntersection(V_, box_vertex,  0, 4, 7) || checkBoxIntersection(V_, box_vertex,  0, 3, 7)
+	                )
+	            {
+	                select = i;
+	            } 
+
+        	}
+
+        }else{
+
+        	for (int i = 0; i < pDisplayScene->ObjectCount; ++i) {
+	            //ADD YOUR CODE HERE: Draw the bounding boxes
+	            box_vertex = new Vertex[8];
+	            for (int j = 0; j < 8; ++j) {
+	                box_vertex[j] = pDisplayScene->pObjectList[i].pBoundingBox[j];
+	                temp	= Transform(pDisplayScene->pObjectList[i].ModelMatrix,box_vertex[j]);
+	                temp2	= Transform(pDisplayCamera->ViewingMatrix,temp);
+	                box_vertex[j] = Transform(pDisplayCamera->ProjectionMatrix,temp2);
+	            }
+
+	            if(checkBoxIntersection(x_w, y_w, box_vertex,  0, 1, 2) || checkBoxIntersection(x_w, y_w, box_vertex,  0, 3, 2) ||
+	                   checkBoxIntersection(x_w, y_w, box_vertex,  4, 7, 6) || checkBoxIntersection(x_w, y_w, box_vertex,  4, 5, 6) ||
+	                   checkBoxIntersection(x_w, y_w, box_vertex,  0, 4, 5) || checkBoxIntersection(x_w, y_w, box_vertex,  0, 1, 5) ||
+	                   checkBoxIntersection(x_w, y_w, box_vertex,  3, 7, 6) || checkBoxIntersection(x_w, y_w, box_vertex,  3, 2, 6) ||
+	                   checkBoxIntersection(x_w, y_w, box_vertex,  1, 5, 6) || checkBoxIntersection(x_w, y_w, box_vertex,  1, 2, 6) ||
+	                    checkBoxIntersection(x_w, y_w, box_vertex,  0, 4, 7) || checkBoxIntersection(x_w, y_w, box_vertex,  0, 3, 7)
+	                )
+	            {
+	                select = i;
+	            } 
+
+        	}
 
         }
 
+
+		SelectedObject = select;	
 		glutPostRedisplay();
 	}
 }
@@ -450,7 +520,7 @@ void KeyboardFunc(unsigned char key, int x, int y)
 	case 'n':
 		SelectionMode = !SelectionMode;
 		if(SelectionMode)
-			cout << "Selection Mode" << endl;
+			cout << "Selection Mode: select an object" << endl;
 		else
 			cout << "Camera Mode" << endl;
 		break;
