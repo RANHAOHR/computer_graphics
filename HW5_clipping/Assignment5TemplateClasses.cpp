@@ -479,11 +479,225 @@ int Select(int previous, Scene* pScene, Camera* pCamera, float x, float y)
 
 // Clip a polygon against view volume borders
 // ADD CODE HERE: dummy function only copies polygons
-Vertex* ClipPolygon(int count, Vertex* input, int* out_count)
+Vertex* ClipPolygon(Vertex* input, int* out_count)
 {
-	Vertex* output = new Vertex[count];
-	for(int i = 0; i < count; i++)
-		output[i] = input[i];
-	*out_count = count;
-	return output;
+    //length should be either 0 or 2
+    int length1 = 0;
+    Vertex* output1;
+	Vertex* outputX1 = checkClipX( input[0], input[1], length1);
+    if(length1 == 2 ){
+        output1 = checkClipY( outputX1[0], outputX1[1], length1);
+    }
+
+    int length2 = 0;
+    Vertex* output2;
+    Vertex* outputX2 = checkClipX( input[1], input[2], length2);
+    if(length2 == 2 ){
+        output2  = checkClipY( outputX2[0], outputX2[1], length2);
+    }
+
+    int length3 = 0;
+    Vertex* output3;
+    Vertex* outputX3 = checkClipX( input[2], input[0], length3);
+    if(length3 == 2 ){
+        output3 = checkClipY( outputX3[0], outputX3[1], length3);
+    }
+
+    *out_count = length1 + length2 + length3;
+
+    Vertex* output = new Vertex[*out_count];
+    int i = 0;
+    if(length1 == 2){
+        output[i] = output1[0];
+        output[i+1] = output1[1];
+        i +=2;
+    }
+
+    if(length2 == 2){
+        output[i] = output2[0];
+        output[i+1] = output2[1];
+        i +=2;
+    }
+
+    if(length3 == 2){
+        output[i] = output3[0];
+        output[i+1] = output3[1];
+    }
+
+    return output;
+}
+
+Vertex* checkClipX( Vertex &vert1, Vertex &vert2, int &length ){
+
+    Vertex* newVertex;
+    length = 0;
+    if(vert1.x < -vert1.h){
+        if( ( -vert2.h < vert2.x ) && (vert2.x <= vert2.h) ){ //point2 inside, point 1 outside
+//            Vertex* newVertex = new Vertex[2];
+            newVertex= new Vertex[2];
+            newVertex[0] = vert2;
+            float t = (vert2.h + vert2.x ) / ( (vert2.h + vert2.x) - (vert1.h + vert1.x) ); // start from v2, x+w = 0
+            newVertex[1].x = (1-t) * vert2.x + t * vert1.x;
+            newVertex[1].y = (1-t) * vert2.y + t * vert1.y;
+            newVertex[1].z = (1-t) * vert2.z + t * vert1.z;
+            newVertex[1].h = (1-t) * vert2.h + t * vert1.h;
+            length = 2;
+        }else if( vert2.x > vert2.h ){ //point1 outside, point 2 outside, different boundaries
+            newVertex= new Vertex[2];
+            float t1 = (vert2.h + vert2.x ) / ( (vert2.h + vert2.x) - (vert1.h + vert1.x) ); // start from v2, x+w = 0
+            float t2 = (vert2.h - vert2.x ) / ( (vert2.h - vert2.x) - (vert1.h - vert1.x) ); // start from v2, w-x = 0
+            newVertex[0].x = (1-t1) * vert2.x + t1 * vert1.x;
+            newVertex[0].y = (1-t1) * vert2.y + t1 * vert1.y;
+            newVertex[0].z = (1-t1) * vert2.z + t1 * vert1.z;
+            newVertex[0].h = (1-t1) * vert2.h + t1 * vert1.h;
+
+            newVertex[1].x = (1-t2) * vert2.x + t2 * vert1.x;
+            newVertex[1].y = (1-t2) * vert2.y + t2 * vert1.y;
+            newVertex[1].z = (1-t2) * vert2.z + t2 * vert1.z;
+            newVertex[1].h = (1-t2) * vert2.h + t2 * vert1.h;
+            length = 2;
+        }
+    }else if( ( vert1.x >= -vert1.h ) && ( vert1.x <= vert1.h )){
+        if( ( -vert2.h < vert2.x ) && (vert2.x <= vert2.h) ){
+            newVertex= new Vertex[2];
+            newVertex[0] = vert2;
+            newVertex[1] = vert1;
+            length = 2;
+        }else if(  vert2.x > vert2.h ){
+            newVertex= new Vertex[2];
+            newVertex[0] = vert1;
+            float t = (vert1.h - vert1.x ) / ( (vert1.h - vert1.x) - (vert2.h - vert2.x) ); // start from v1, w-x = 0
+            newVertex[1].x = (1-t) * vert1.x + t * vert2.x;
+            newVertex[1].y = (1-t) * vert1.y + t * vert2.y;
+            newVertex[1].z = (1-t) * vert1.z + t * vert2.z;
+            newVertex[1].h = (1-t) * vert1.h + t * vert2.h;
+            length = 2;
+        }else if( vert2.x < -vert2.h ){
+            newVertex= new Vertex[2];
+            newVertex[0] = vert1;
+            float t = (vert1.h + vert1.x ) / ( (vert1.h + vert1.x) - (vert2.h + vert2.x) ); // start from v1, w+x = 0
+            newVertex[1].x = (1-t) * vert1.x + t * vert2.x;
+            newVertex[1].y = (1-t) * vert1.y + t * vert2.y;
+            newVertex[1].z = (1-t) * vert1.z + t * vert2.z;
+            newVertex[1].h = (1-t) * vert1.h + t * vert2.h;
+            length = 2;
+        }
+
+    }else if (vert1.x > vert1.h){
+        if( ( -vert2.h < vert2.x ) && (vert2.x <= vert2.h) ){
+            newVertex= new Vertex[2];
+            newVertex[0] = vert2;
+            float t = (vert2.h - vert2.x ) / ( (vert2.h - vert2.x) - (vert1.h - vert1.x) ); // start from v2, w-x = 0
+            newVertex[1].x = (1-t) * vert2.x + t * vert1.x;
+            newVertex[1].y = (1-t) * vert2.y + t * vert1.y;
+            newVertex[1].z = (1-t) * vert2.z + t * vert1.z;
+            newVertex[1].h = (1-t) * vert2.h + t * vert1.h;
+            length = 2;
+        }else if( vert2.x < -vert2.h ){
+            newVertex= new Vertex[2];
+            float t1 = (vert2.h + vert2.x ) / ( (vert2.h + vert2.x) - (vert1.h + vert1.x) ); // start from v2, x+w = 0
+            float t2 = (vert2.h - vert2.x ) / ( (vert2.h - vert2.x) - (vert1.h - vert1.x) ); // start from v2, w-x = 0
+            newVertex[0].x = (1-t1) * vert2.x + t1 * vert1.x;
+            newVertex[0].y = (1-t1) * vert2.y + t1 * vert1.y;
+            newVertex[0].z = (1-t1) * vert2.z + t1 * vert1.z;
+            newVertex[0].h = (1-t1) * vert2.h + t1 * vert1.h;
+
+            newVertex[1].x = (1-t2) * vert2.x + t2 * vert1.x;
+            newVertex[1].y = (1-t2) * vert2.y + t2 * vert1.y;
+            newVertex[1].z = (1-t2) * vert2.z + t2 * vert1.z;
+            newVertex[1].h = (1-t2) * vert2.h + t2 * vert1.h;
+            length = 2;
+        }
+    }
+
+    return newVertex;
+
+}
+
+
+Vertex* checkClipY( Vertex &vert1, Vertex &vert2, int &length){
+
+    Vertex* newVertex;
+    length = 0;
+    if(vert1.y < -vert1.h){
+        if( ( -vert2.h < vert2.y ) && (vert2.y <= vert2.h) ){ //point2 inside, point 1 outside
+//            Vertex* newVertex = new Vertex[2];
+            newVertex= new Vertex[2];
+            newVertex[0] = vert2;
+            float t = (vert2.h + vert2.y ) / ( (vert2.h + vert2.y) - (vert1.h + vert1.y) ); // start from v2, y+w = 0
+            newVertex[1].x = (1-t) * vert2.x + t * vert1.x;
+            newVertex[1].y = (1-t) * vert2.y + t * vert1.y;
+            newVertex[1].z = (1-t) * vert2.z + t * vert1.z;
+            newVertex[1].h = (1-t) * vert2.h + t * vert1.h;
+            length = 2;
+        }else if( vert2.y > vert2.h ){ //point1 outside, point 2 outside, different boundaries
+            newVertex= new Vertex[2];
+            float t1 = (vert2.h + vert2.y ) / ( (vert2.h + vert2.y) - (vert1.h + vert1.y) ); // start from v2, y+w = 0
+            float t2 = (vert2.h - vert2.y ) / ( (vert2.h - vert2.y) - (vert1.h - vert1.y) ); // start from v2, w-y = 0
+            newVertex[0].x = (1-t1) * vert2.x + t1 * vert1.x;
+            newVertex[0].y = (1-t1) * vert2.y + t1 * vert1.y;
+            newVertex[0].z = (1-t1) * vert2.z + t1 * vert1.z;
+            newVertex[0].h = (1-t1) * vert2.h + t1 * vert1.h;
+
+            newVertex[1].x = (1-t2) * vert2.x + t2 * vert1.x;
+            newVertex[1].y = (1-t2) * vert2.y + t2 * vert1.y;
+            newVertex[1].z = (1-t2) * vert2.z + t2 * vert1.z;
+            newVertex[1].h = (1-t2) * vert2.h + t2 * vert1.h;
+            length = 2;
+        }
+    }else if( ( vert1.y >= -vert1.h ) && ( vert1.y <= vert1.h )){
+        if( ( -vert2.h < vert2.y ) && (vert2.y <= vert2.h) ){
+            newVertex= new Vertex[2];
+            newVertex[0] = vert2;
+            newVertex[1] = vert1;
+            length = 2;
+        }else if(  vert2.y > vert2.h ){
+            newVertex= new Vertex[2];
+            newVertex[0] = vert1;
+            float t = (vert1.h - vert1.y ) / ( (vert1.h - vert1.y) - (vert2.h - vert2.y) ); // start from v1, w-x = 0
+            newVertex[1].x = (1-t) * vert1.x + t * vert2.x;
+            newVertex[1].y = (1-t) * vert1.y + t * vert2.y;
+            newVertex[1].z = (1-t) * vert1.z + t * vert2.z;
+            newVertex[1].h = (1-t) * vert1.h + t * vert2.h;
+            length = 2;
+        }else if( vert2.y < -vert2.h ){
+            newVertex= new Vertex[2];
+            newVertex[0] = vert1;
+            float t = (vert1.h + vert1.y ) / ( (vert1.h + vert1.y) - (vert2.h + vert2.y) ); // start from v1, w+y = 0
+            newVertex[1].x = (1-t) * vert1.x + t * vert2.x;
+            newVertex[1].y = (1-t) * vert1.y + t * vert2.y;
+            newVertex[1].z = (1-t) * vert1.z + t * vert2.z;
+            newVertex[1].h = (1-t) * vert1.h + t * vert2.h;
+            length = 2;
+        }
+
+    }else if (vert1.y > vert1.h){
+        if( ( -vert2.h < vert2.y ) && (vert2.y <= vert2.h) ){
+            newVertex= new Vertex[2];
+            newVertex[0] = vert2;
+            float t = (vert2.h - vert2.y ) / ( (vert2.h - vert2.y) - (vert1.h - vert1.y) ); // start from v2, w-y = 0
+            newVertex[1].x = (1-t) * vert2.x + t * vert1.x;
+            newVertex[1].y = (1-t) * vert2.y + t * vert1.y;
+            newVertex[1].z = (1-t) * vert2.z + t * vert1.z;
+            newVertex[1].h = (1-t) * vert2.h + t * vert1.h;
+            length = 2;
+        }else if( vert2.y < -vert2.h ){
+            newVertex= new Vertex[2];
+            float t1 = (vert2.h + vert2.y ) / ( (vert2.h + vert2.y) - (vert1.h + vert1.y) ); // start from v2, y+w = 0
+            float t2 = (vert2.h - vert2.y ) / ( (vert2.h - vert2.y) - (vert1.h - vert1.y) ); // start from v2, w-y = 0
+            newVertex[0].x = (1-t1) * vert2.x + t1 * vert1.x;
+            newVertex[0].y = (1-t1) * vert2.y + t1 * vert1.y;
+            newVertex[0].z = (1-t1) * vert2.z + t1 * vert1.z;
+            newVertex[0].h = (1-t1) * vert2.h + t1 * vert1.h;
+
+            newVertex[1].x = (1-t2) * vert2.x + t2 * vert1.x;
+            newVertex[1].y = (1-t2) * vert2.y + t2 * vert1.y;
+            newVertex[1].z = (1-t2) * vert2.z + t2 * vert1.z;
+            newVertex[1].h = (1-t2) * vert2.h + t2 * vert1.h;
+            length = 2;
+        }
+    }
+
+    return newVertex;
+
 }

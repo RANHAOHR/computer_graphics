@@ -108,7 +108,7 @@ void DisplayFunc()
 				input[k]= Transform(pDisplayCamera->ProjectionMatrix,temp2);
 			}
 
-			output = ClipPolygon(3, input, &length);
+			output = ClipPolygon(input, &length);
 
 			glBegin(GL_POLYGON);
 			for(int k = 0; k < length; k++)

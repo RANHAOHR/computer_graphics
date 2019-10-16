@@ -73,4 +73,6 @@ public:
 
 Vertex Transform(float* matrix, Vertex& point);
 int Select(int previous, Scene* pScene, Camera* pCamera, float x, float y);
-Vertex* ClipPolygon(int count, Vertex* input, int* out_count);
+Vertex* ClipPolygon(Vertex* input, int* out_count);
+Vertex* checkClipX( Vertex &vert1, Vertex &vert2, int &length);
+Vertex* checkClipY( Vertex &vert1, Vertex &vert2,int &length);
