@@ -209,15 +209,51 @@ void MotionFunc(int x, int y)
 	if(MouseRight && !SelectionMode)
 		pDisplayCamera->Move(0, 0, ((float) y - MouseY)/32);
 
+    float alpha = 0.01;
 	if(MouseMiddle && SelectionMode)
 	{
 		// Move the Near Plane
 		// ADD CODE HERE
+		if( y > MouseY ){
+            pDisplayCamera->NearPlane =  pDisplayCamera->NearPlane + alpha * ((float) y - MouseY);
+            if(pDisplayCamera->NearPlane >= pDisplayCamera->FarPlane){
+                pDisplayCamera->NearPlane = pDisplayCamera->FarPlane - 2.0;
+            }
+
+            if(pDisplayCamera->NearPlane <= pDisplayCamera->Position.z){
+                pDisplayCamera->NearPlane = pDisplayCamera->Position.z + 1.0;
+            }
+        }
+
+        if( y < MouseY ){
+            pDisplayCamera->NearPlane =  pDisplayCamera->NearPlane - alpha * ((float) y - MouseY);
+            if(pDisplayCamera->NearPlane >= pDisplayCamera->FarPlane){
+                pDisplayCamera->NearPlane = pDisplayCamera->FarPlane - 2.0;
+            }
+
+            if(pDisplayCamera->NearPlane <= pDisplayCamera->Position.z){
+                pDisplayCamera->NearPlane = pDisplayCamera->Position.z + 1.0;
+            }
+        }
 	}
+
 	if(MouseRight && SelectionMode)
 	{
 		// Move the Far Plane
 		// ADD CODE HERE
+        if( (y > MouseY) ){
+            pDisplayCamera->FarPlane =  pDisplayCamera->FarPlane + alpha * ((float) y - MouseY);
+            if(pDisplayCamera->FarPlane <= pDisplayCamera->NearPlane){
+                pDisplayCamera->FarPlane = pDisplayCamera->NearPlane + 2.0;
+            }
+        }
+
+        if( (y < MouseY) ){
+            pDisplayCamera->FarPlane =  pDisplayCamera->FarPlane - alpha * ((float) y - MouseY);
+            if(pDisplayCamera->FarPlane <= pDisplayCamera->NearPlane){
+                pDisplayCamera->FarPlane = pDisplayCamera->NearPlane + 2.0;
+            }
+        }
 	}
     
 	MouseX = x;
@@ -306,18 +342,21 @@ void KeyboardFunc(unsigned char key, int x, int y)
 	case 'N':
 	case 'n':
 		SelectionMode = !SelectionMode;
-		if(SelectionMode)
+		if(SelectionMode){
 			cout << "Selection Mode" << endl;
-		else
+		}
+		else{
 			cout << "Camera Mode" << endl;
+		}
 		break;
 	case 'P':
 	case 'p':
 		PerspectiveMode = !PerspectiveMode;
-		if(PerspectiveMode)
-			glutSetWindowTitle("Assignment 5 (Perspective)");
-		else
-			glutSetWindowTitle("Assignment 5 (Orthogonal)");
+		if(PerspectiveMode) {
+            glutSetWindowTitle("Assignment 5 (Perspective)");
+        }else{
+            glutSetWindowTitle("Assignment 5 (Orthogonal)");
+		}
 		break;
 	case 'Q':
 	case 'q':

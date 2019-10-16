@@ -301,7 +301,7 @@ Camera::Camera()
 
 	FarPlane = 10.0;
 	NearPlane = 2.0;
-	ViewPlane = 10.0;
+	ViewPlane = 8.0;
 
 	LookAt();
 }
@@ -486,13 +486,17 @@ Vertex* ClipPolygon(Vertex* input, int* out_count)
     Vertex* output1;
 	Vertex* outputX1 = checkClipX( input[0], input[1], length1);
     if(length1 == 2 ){
+    	printf(" length1 \n");
+    	printf("outputX1[0] is %f, %f, %f\n", outputX1[0].x, outputX1[0].y, outputX1[0].z);
+    	printf("outputX1[1] is %f, %f, %f\n", outputX1[1].x, outputX1[1].y, outputX1[1].z);
         output1 = checkClipY( outputX1[0], outputX1[1], length1);
     }
-
+    
     int length2 = 0;
     Vertex* output2;
     Vertex* outputX2 = checkClipX( input[1], input[2], length2);
     if(length2 == 2 ){
+
         output2  = checkClipY( outputX2[0], outputX2[1], length2);
     }
 
@@ -500,6 +504,7 @@ Vertex* ClipPolygon(Vertex* input, int* out_count)
     Vertex* output3;
     Vertex* outputX3 = checkClipX( input[2], input[0], length3);
     if(length3 == 2 ){
+
         output3 = checkClipY( outputX3[0], outputX3[1], length3);
     }
 
