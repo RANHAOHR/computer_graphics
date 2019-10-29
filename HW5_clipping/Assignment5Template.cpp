@@ -387,6 +387,8 @@ void KeyboardFunc(unsigned char key, int x, int y)
 
 int main(int argc, char* argv[])
 {
+	glGetString(GL_VERSION);
+
     pDisplayScene = new Scene;
 	pDisplayScene->Load(argv[1]);
 	pDisplayCamera = new Camera;

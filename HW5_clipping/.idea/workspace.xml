@@ -11,13 +11,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f23f42fa-4f43-4f5c-a376-7c7a6437278e" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assignment5Template.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Assignment5Template.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assignment5TemplateClasses.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Assignment5TemplateClasses.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/as5" beforeDir="false" afterPath="$PROJECT_DIR$/as5" afterDir="false" />
-    </list>
+    <list default="true" id="f23f42fa-4f43-4f5c-a376-7c7a6437278e" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,7 +36,7 @@
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../HW6_shading" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -84,6 +78,7 @@
       <updated>1571182033261</updated>
       <workItem from="1571182039107" duration="8775000" />
       <workItem from="1571238262939" duration="1000000" />
+      <workItem from="1571753947080" duration="20000" />
     </task>
     <servers />
   </component>
@@ -95,7 +90,9 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>

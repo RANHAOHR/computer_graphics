@@ -278,7 +278,7 @@ bool checkBoxIntersection(float xw, float yw, Vertex* box_vertex,  int vi, int v
     Vertex D_, V_1, V_2;
     D_.x = xw - box_vertex[vi].x;
     D_.y = yw - box_vertex[vi].y;
-    D_.z = -ViewPlane - box_vertex[vi].z;
+    D_.z = -pDisplayCamera->ViewPlane - box_vertex[vi].z;
 
     V_1.x = box_vertex[vj].x - box_vertex[vi].x;
     V_1.y = box_vertex[vj].y - box_vertex[vi].y;
@@ -561,6 +561,7 @@ void KeyboardFunc(unsigned char key, int x, int y)
 
 int main(int argc, char* argv[])
 {
+
     pDisplayScene = new Scene;
 	//YOU MAY ENTER YOUR OWN SCENE FILE OR PASS IT AS AN ARGUMENT TO THE PROGRAM
 	pDisplayScene->Load("scene2.dat");
