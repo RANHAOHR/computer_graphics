@@ -2,7 +2,7 @@
 
 #define MAX_LIGHTS 2 
 
-uniform float ns_;
+#define ns_ 10.0;
 varying vec3 vertex_;
 varying vec3 normal_;
 

@@ -118,8 +118,8 @@ void setShaders() {
 	fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 	
 	//read the shader files and store the strings in corresponding char. arrays.
-	vs = shaderFileRead("phongshader.vert"); //phongshader, gouraudshader
-	fs = shaderFileRead("phongshader.frag");
+	vs = shaderFileRead("phongshader.vert"); //phongshader, gouraudshader, cooktorrence_phong
+	fs = shaderFileRead("cooktorrence_phong.frag");
 
 	const char * vv = vs;
 	const char * ff = fs;
@@ -138,31 +138,35 @@ void setShaders() {
 	//create an empty program object to attach the shader objects
 	program = glCreateProgram();
 
-	// define unifrom variables
-	GLint location = glGetUniformLocation(program,"ns_");
-	GLfloat ns_ = { 10.0f };
-	glUniform1f(location ,ns_);
+	// // define unifrom variables
+	// GLint location = glGetUniformLocation(program,"ns_");
+	// GLfloat ns_ = { 10.0f };
+	// glUniform1f(location ,ns_);
 
-	//F_0
-	location = glGetUniformLocation(program,"F_0");
-	GLfloat F_0[] = { 0.755, 0.49, 0.095, 1.0 };
-	glUniform4fv(location ,4, F_0);
+	// //F_0
+	// location = glGetUniformLocation(program,"F_0");
+	// GLfloat F_0 = { 0.755f};
+	// glUniform1f(location, F_0);
 
-	location = glGetUniformLocation(program,"d_");
-	GLfloat d_ = { 0.3 };
-	glUniform1f(location ,d_);
+	// location = glGetUniformLocation(program,"R_d");
+	// GLfloat R_d = { 0.755f };
+	// glUniform1f(location, R_d);
 
-	location = glGetUniformLocation(program,"s_");
-	GLfloat s_ = 1 - d_;
-	glUniform1f(location ,s_);
+	// location = glGetUniformLocation(program,"d_");
+	// GLfloat d_ = { 0.3f };
+	// glUniform1f(location ,d_);
 
-	location = glGetUniformLocation(program,"R_d");
-	GLfloat R_d[] = { 0.755, 0.49, 0.095, 1.0 };
-	glUniform4fv(location ,4, R_d);
+	// location = glGetUniformLocation(program,"s_");
+	// GLfloat s_ = 1 - d_;
+	// glUniform1f(location ,s_);
 
-	location = glGetUniformLocation(program,"m_");
-	GLfloat m_ = { 0.1f };
-	glUniform1f(location ,m_);
+	// // location = glGetUniformLocation(program,"R_d");
+	// // GLfloat R_d[] = { 0.755, 0.49, 0.095, 1.0 };
+	// // glUniform4fv(location ,4, R_d);
+
+	// location = glGetUniformLocation(program,"m_");
+	// GLfloat m_ = { 1.0f };
+	// glUniform1f(location ,m_);
 
 	//attach the shader objects to the program object
 	glAttachShader(program,vertex_shader);
@@ -199,9 +203,9 @@ void lightSpecification(){
 			  CameraRadius*sin(CameraTheta)*sin(CameraPhi),
 			  CameraRadius*cos(CameraPhi),1.0}; //same with camera
 
-	GLfloat ambientColor[] = {1.0,0.0,0.0,1.0};
-	GLfloat dissuseColor[] = {1.0,0.0,0.0,1.0};
-	GLfloat specularColor[] = {1.0,0.0,0.0,1.0};
+	GLfloat ambientColor[] = {1.0,1.0,1.0,1.0};
+	GLfloat dissuseColor[] = {1.0,1.0,1.0,1.0};
+	GLfloat specularColor[] = {1.0,0.0,1.0,1.0};
 
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambientColor);
