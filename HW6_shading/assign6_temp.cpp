@@ -19,15 +19,19 @@ Template for Assignment 6-Local Illumination and Shading
 #define PI 3.14159265359
 
 using namespace std;
- 
+
 
 //Illimunation and shading related declerations
 char *shaderFileRead(char *fn);
 GLuint vertex_shader,fragment_shader,program;
-int illimunationMode = 0;
+int illimunationMode = 1;
 int shadingMode = 0;
 int lightSource = 0;
 
+int colorInd = 0;
+float R_ = 1.0;
+float G_ = 1.0;
+float B_ = 1.0;
 
 //Projection, camera contral related declerations
 int WindowWidth,WindowHeight;
@@ -89,6 +93,7 @@ void MouseFunc(int button,int state,int x,int y)
 
 void MotionFunc(int x, int y)
 {
+
 	if(MouseLeft)
 	{
         CameraTheta += 0.01*PI*(MouseX - x);
@@ -107,6 +112,48 @@ void MotionFunc(int x, int y)
 	glutPostRedisplay();
 }
 
+void loadParams(){
+
+	if (illimunationMode == 0) // phong illimination, regardless of shaders
+	{
+		GLint locns = glGetUniformLocation(program, "ns_");
+		if (locns == -1)
+	        std::cout << "Warning: can't find uniform variable ns_ !\n";
+	    GLfloat ns_ = { 10.0f };
+	    glUniform1f(locns, ns_);
+	}
+
+	if (illimunationMode == 1 ) // Cook-Torrance illumination
+	{
+		GLint locm = glGetUniformLocation(program, "m_");
+		if (locm == -1)
+	        std::cout << "Warning: can't find uniform variable m_ !\n";
+	    glUniform1f(locm, 0.1f);
+
+		GLint locd = glGetUniformLocation(program, "d_");
+		if (locd == -1)
+	        std::cout << "Warning: can't find uniform variable d_ !\n";
+	    GLfloat d_ = { 0.3f };
+	    glUniform1f(locd, d_);
+
+		GLint locs = glGetUniformLocation(program, "s_");
+		if (locs == -1)
+	        std::cout << "Warning: can't find uniform variable s_ !\n";
+	    GLfloat s_ = 1 - d_;
+	    glUniform1f(locs, s_);
+
+		GLint locF0 = glGetUniformLocation(program, "F_0");
+		if (locF0 == -1)
+	        std::cout << "Warning: can't find uniform variable F_0 !\n";
+	    glUniform4f(locF0, 0.755f, 0.49f, 0.095f, 1.0f );
+
+		GLint locRd = glGetUniformLocation(program, "R_d");
+		if (locRd == -1)
+	        std::cout << "Warning: can't find uniform variable R_d !\n";
+	    glUniform4f(locRd, 0.755f, 0.49f, 0.095f, 1.0f );
+	}
+
+}
 
 void setShaders() {
 
@@ -118,8 +165,31 @@ void setShaders() {
 	fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 	
 	//read the shader files and store the strings in corresponding char. arrays.
-	vs = shaderFileRead("phongshader.vert"); //phongshader, gouraudshader, cooktorrence_phong
-	fs = shaderFileRead("cooktorrence_phong.frag");
+
+	if (shadingMode == 0) // phong shader
+	{
+		vs = shaderFileRead("phongshader.vert");
+
+	 	if (illimunationMode == 0) //phong illumination
+		{
+			fs = shaderFileRead("phongshader.frag"); //phongshader,
+			printf("Using Phong Shader, With Phong Illumination........\n");
+		}else{
+			fs = shaderFileRead("cooktorrence_phong.frag"); //cooktorrence illumination, phong shader
+			printf("Using Phong Shader, With Cook-Torrance Illumination........\n");
+		}
+	}else{ //gouraud shader
+
+	 	if (illimunationMode == 0) //phong illumination
+		{
+			vs = shaderFileRead("phong_gouraudshader.vert");
+			printf("Using Gouraud Shader, With Phong Illumination........\n");
+		}else{
+			vs = shaderFileRead("cooktorrence_gouraud.vert"); //cooktorrence illumination, gouraud shader
+			printf("Using Gouraud Shader, With Cook-Torrance Illumination........\n");
+		}	
+		fs = shaderFileRead("gouraudshader.frag");
+	}
 
 	const char * vv = vs;
 	const char * ff = fs;
@@ -138,39 +208,11 @@ void setShaders() {
 	//create an empty program object to attach the shader objects
 	program = glCreateProgram();
 
-	// // define unifrom variables
-	// GLint location = glGetUniformLocation(program,"ns_");
-	// GLfloat ns_ = { 10.0f };
-	// glUniform1f(location ,ns_);
-
-	// //F_0
-	// location = glGetUniformLocation(program,"F_0");
-	// GLfloat F_0 = { 0.755f};
-	// glUniform1f(location, F_0);
-
-	// location = glGetUniformLocation(program,"R_d");
-	// GLfloat R_d = { 0.755f };
-	// glUniform1f(location, R_d);
-
-	// location = glGetUniformLocation(program,"d_");
-	// GLfloat d_ = { 0.3f };
-	// glUniform1f(location ,d_);
-
-	// location = glGetUniformLocation(program,"s_");
-	// GLfloat s_ = 1 - d_;
-	// glUniform1f(location ,s_);
-
-	// // location = glGetUniformLocation(program,"R_d");
-	// // GLfloat R_d[] = { 0.755, 0.49, 0.095, 1.0 };
-	// // glUniform4fv(location ,4, R_d);
-
-	// location = glGetUniformLocation(program,"m_");
-	// GLfloat m_ = { 1.0f };
-	// glUniform1f(location ,m_);
 
 	//attach the shader objects to the program object
 	glAttachShader(program,vertex_shader);
 	glAttachShader(program,fragment_shader);
+	// define unifrom variables
 
 	/*
 	**************
@@ -194,45 +236,52 @@ void setShaders() {
 
 	//Start to use the program object, which is the part of the current rendering state
 	glUseProgram(program);
-
+	
+	// set unifom variables
+	loadParams();
 }
 
 void lightSpecification(){
 
+if (lightSource == 0)
+{
+	printf("Using Primary light source........\n");
 	GLfloat lightPosition[] = {CameraRadius*cos(CameraTheta)*sin(CameraPhi),
 			  CameraRadius*sin(CameraTheta)*sin(CameraPhi),
 			  CameraRadius*cos(CameraPhi),1.0}; //same with camera
 
 	GLfloat ambientColor[] = {1.0,1.0,1.0,1.0};
 	GLfloat dissuseColor[] = {1.0,1.0,1.0,1.0};
-	GLfloat specularColor[] = {1.0,0.0,1.0,1.0};
+	GLfloat specularColor[] = {1.0,1.0,1.0,1.0};
 
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambientColor);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, dissuseColor);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specularColor);
 
-
+}else{
+	printf("Using Secondary light source........\n");
 	GLfloat lightPosition2[] = {7.0,7.0,7.0,1.0}; //same with camera
 
-	GLfloat ambientColor2[] = {0.0,0.0,1.0,1.0};
-	GLfloat dissuseColor2[] = {0.0,0.0,1.0,1.0};
-	GLfloat specularColor2[] = {0.0,0.0,1.0,1.0};
+	GLfloat ambientColor2[] = {R_,G_,B_,1.0};
+	GLfloat dissuseColor2[] = {R_,G_,B_,1.0};
+	GLfloat specularColor2[] = {R_,G_,B_,1.0};
 
-	glLightfv(GL_LIGHT1, GL_POSITION, lightPosition2);
-	glLightfv(GL_LIGHT1, GL_AMBIENT, ambientColor2);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, dissuseColor2);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, specularColor2);
+	glLightfv(GL_LIGHT0, GL_POSITION, lightPosition2);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambientColor2);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, dissuseColor2);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, specularColor2);
+}
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
 }
 
 
 //Motion and camera controls
 void KeyboardFunc(unsigned char key, int x, int y)
 {
+
     switch(key)
 	{
 	case 'A':
@@ -282,12 +331,29 @@ void KeyboardFunc(unsigned char key, int x, int y)
 		{
 			//change color of the secondary light source at each key press, 
 			//light color cycling through pure red, green, blue, and white.
+			if (colorInd % 4 == 0)
+			{
+				R_ = 1.0; G_ = 0.0; B_ = 0.0; //Red
+			}else if(colorInd % 4 == 1){
+				R_ = 0.0; G_ = 1.0; B_ = 0.0; //Green
+			}else if(colorInd % 4 == 2){
+				R_ = 0.0; G_ = 0.0; B_ = 1.0; //Blue
+			}else if(colorInd % 4 == 3){
+				R_ = 1.0; G_ = 1.0; B_ = 1.0; //White
+			}
+
+			colorInd += 1;
+
 		}
 		break;
 
     default:
 		break;
     }
+
+	lightSpecification(); // updated
+
+	setShaders();
 
 	glutPostRedisplay();
 }
@@ -312,14 +378,6 @@ int main(int argc, char **argv)
 
 	setShaders();
 
-	// const GLubyte *temp;
-	// temp=glGetString(GL_VERSION);
-	// printf("%s\n",temp);
-	// temp=glGetString(GL_VENDOR);
-	// printf("%s\n",temp);
-	// temp=glGetString(GL_EXTENSIONS);
-	// printf("%s\n",temp);
-
 	glutMainLoop();
 
 	return 0;
@@ -336,10 +394,10 @@ char *shaderFileRead(char *fn) {
 		cout<< "Failed to load " << fn << endl;
 		return " ";
 	}
-	else
-	{
-		cout << "Successfully loaded " << fn << endl;
-	}
+	// else
+	// {
+	// 	cout << "Successfully loaded " << fn << endl;
+	// }
 	
 	char *content = NULL;
 
