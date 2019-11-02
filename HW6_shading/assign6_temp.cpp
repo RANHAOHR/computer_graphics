@@ -16,10 +16,12 @@ Template for Assignment 6-Local Illumination and Shading
 
 #include <GL/freeglut.h>
 
+#include <fstream>
+#include <iostream>
+
 #define PI 3.14159265359
 
 using namespace std;
-
 
 //Illimunation and shading related declerations
 char *shaderFileRead(char *fn);
@@ -33,11 +35,13 @@ float R_ = 1.0;
 float G_ = 1.0;
 float B_ = 1.0;
 
+float m_, d_, ns_;
+GLfloat ambientColorP[4], dissuseColorP[4], specularColorP[4],ambientColorC[4], dissuseColorC[4], specularColorC[4], F_0[4];
+
 //Projection, camera contral related declerations
 int WindowWidth,WindowHeight;
 bool LookAtObject = false;
 bool ShowAxes = true;
-
 
 float CameraRadius = 10;
 float CameraTheta = PI / 2;
@@ -47,7 +51,49 @@ int MouseY = 0;
 bool MouseLeft = false;
 bool MouseRight = false;
 
+void loadMaterials(){
+    // filestream variable file 
+    fstream file; 
+    string parameters, filename; 
+  
+    // filename of the file 
+    filename = "materials.dat"; 
+  
+    // opening file 
+    file.open(filename.c_str()); 
+  
+    // extracting words from the file 
+    string key;
 
+	ambientColorP[3] = 1.0;
+	dissuseColorP[3] = 1.0;
+	specularColorP[3] = 1.0;
+
+	ambientColorC[3] = 1.0;
+	dissuseColorC[3] = 1.0;
+	specularColorC[3] = 1.0;
+	F_0[3] = 1.0;
+ 	file >> key >> ambientColorP[0] >> ambientColorP[1] >> ambientColorP[2] >> dissuseColorP[0] >> dissuseColorP[1] >> dissuseColorP[2] >> 
+ 		specularColorP[0] >> specularColorP[1] >> specularColorP[2] >> ns_ >> key >> ambientColorC[0] >> ambientColorC[1] >> ambientColorC[2] >>
+ 		dissuseColorC[0] >> dissuseColorC[1] >> dissuseColorC[2] >> specularColorC[0] >> specularColorC[1] >> specularColorC[2] 
+ 		>> F_0[0] >> F_0[1] >> F_0[2] >> d_ >> m_;
+    // while (file >> parameters) 
+    // { 
+    // 	if (parameters == "P")
+    // 	{
+    // 		cout << parameters << endl; 
+    // 	}
+    //     // displaying content 
+        
+    // } 
+// cout << F_0[0] << endl; 
+// cout << F_0[1] << endl; 
+// cout << F_0[2] << endl; 
+// cout << d_ << endl; 
+// cout << m_ << endl; 
+// cout << ns_ << endl; 
+
+}
 
 void DisplayFunc(void) {
 
@@ -119,7 +165,6 @@ void loadParams(){
 		GLint locns = glGetUniformLocation(program, "ns_");
 		if (locns == -1)
 	        std::cout << "Warning: can't find uniform variable ns_ !\n";
-	    GLfloat ns_ = { 10.0f };
 	    glUniform1f(locns, ns_);
 	}
 
@@ -128,12 +173,11 @@ void loadParams(){
 		GLint locm = glGetUniformLocation(program, "m_");
 		if (locm == -1)
 	        std::cout << "Warning: can't find uniform variable m_ !\n";
-	    glUniform1f(locm, 0.1f);
+	    glUniform1f(locm, m_);
 
 		GLint locd = glGetUniformLocation(program, "d_");
 		if (locd == -1)
 	        std::cout << "Warning: can't find uniform variable d_ !\n";
-	    GLfloat d_ = { 0.3f };
 	    glUniform1f(locd, d_);
 
 		GLint locs = glGetUniformLocation(program, "s_");
@@ -145,12 +189,12 @@ void loadParams(){
 		GLint locF0 = glGetUniformLocation(program, "F_0");
 		if (locF0 == -1)
 	        std::cout << "Warning: can't find uniform variable F_0 !\n";
-	    glUniform4f(locF0, 0.755f, 0.49f, 0.095f, 1.0f );
+	    glUniform4f(locF0, F_0[0], F_0[1], F_0[2], F_0[3] );
 
 		GLint locRd = glGetUniformLocation(program, "R_d");
 		if (locRd == -1)
 	        std::cout << "Warning: can't find uniform variable R_d !\n";
-	    glUniform4f(locRd, 0.755f, 0.49f, 0.095f, 1.0f );
+	    glUniform4f(locRd, F_0[0], F_0[1], F_0[2], F_0[3] );
 	}
 
 }
@@ -236,7 +280,7 @@ void setShaders() {
 
 	//Start to use the program object, which is the part of the current rendering state
 	glUseProgram(program);
-	
+
 	// set unifom variables
 	loadParams();
 }
@@ -250,14 +294,23 @@ if (lightSource == 0)
 			  CameraRadius*sin(CameraTheta)*sin(CameraPhi),
 			  CameraRadius*cos(CameraPhi),1.0}; //same with camera
 
-	GLfloat ambientColor[] = {1.0,1.0,1.0,1.0};
-	GLfloat dissuseColor[] = {1.0,1.0,1.0,1.0};
-	GLfloat specularColor[] = {1.0,1.0,1.0,1.0};
+	// GLfloat ambientColor[] = {1.0,1.0,1.0,1.0};
+	// GLfloat dissuseColor[] = {1.0,1.0,1.0,1.0};
+	// GLfloat specularColor[] = {1.0,1.0,1.0,1.0};
 
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambientColor);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, dissuseColor);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, specularColor);
+
+	if (illimunationMode == 0)
+	{
+		glLightfv(GL_LIGHT0, GL_AMBIENT, ambientColorP);
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, dissuseColorP);
+		glLightfv(GL_LIGHT0, GL_SPECULAR, specularColorP);
+	}else{
+		glLightfv(GL_LIGHT0, GL_AMBIENT, ambientColorC);
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, dissuseColorC);
+		glLightfv(GL_LIGHT0, GL_SPECULAR, specularColorC);		
+	}
+
 
 }else{
 	printf("Using Secondary light source........\n");
@@ -373,6 +426,8 @@ int main(int argc, char **argv)
 	glutMouseFunc(MouseFunc);
     glutMotionFunc(MotionFunc);
     glutKeyboardFunc(KeyboardFunc);
+
+	loadMaterials();
 
 	lightSpecification();
 
