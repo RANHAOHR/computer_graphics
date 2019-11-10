@@ -13,7 +13,6 @@ Template for Assignment 6-Local Illumination and Shading
 #include <string.h>
 
 #include <GL/glew.h>
-
 #include <GL/freeglut.h>
 
 #include <fstream>
