@@ -1,5 +1,5 @@
 # OBJS specifies which files to compile as part of the project
-OBJS = main.cpp primitives.cpp
+OBJS = main.cpp primitives.cpp camera_geometry/camera_geometry.cpp shaders/shaders.cpp
 
 # CC specifies which compiler we're using
 CC = g++ -std=c++11

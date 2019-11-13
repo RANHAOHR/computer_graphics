@@ -194,7 +194,7 @@ void	display(void)
 
 	for(int y = 0; y < fb->GetHeight(); y++)
 	{
-		for(int x = 0; x < fb->GetHeight(); x++)
+		for(int x = 0; x < fb->GetWidth(); x++)
 		{
 			cl = fb->buffer[x][y].color;
 			glColor3f(cl.r, cl.g, cl.b);
@@ -204,7 +204,7 @@ void	display(void)
 	}
 
 	glEnd();
-    glutSwapBuffers();
+  glutSwapBuffers();
 }
 
 
@@ -270,8 +270,6 @@ int main(int argc, char* argv[])
 	fb = new FrameBuffer(INITIAL_RES, INITIAL_RES);
 
 	BresenhamLine(fb, fb->GetWidth()*0.1, fb->GetHeight()*0.1, fb->GetWidth()*0.9, fb->GetHeight()*0.9, Color(1,0,0));
-
-	
 
     // Initialize GLUT
     glutInit(&argc, argv);
