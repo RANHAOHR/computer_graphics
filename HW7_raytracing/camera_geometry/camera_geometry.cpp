@@ -24,7 +24,7 @@ void Vertex::Normalize()
 
 Object::Object()
 {
-	pBoundingBox = new Vertex[8];
+	normal_sign = 1;
 	// Load the identity for the initial modeling matrix
 	ModelMatrix[0] = ModelMatrix[5] = ModelMatrix[10] = ModelMatrix[15] = 1;
 	ModelMatrix[1] = ModelMatrix[2] = ModelMatrix[3] = ModelMatrix[4] =
@@ -34,135 +34,120 @@ Object::Object()
 
 Object::~Object()
 {
-	delete [] pBoundingBox;
-	delete [] pVertexList;
-	delete [] pFaceList;
+	delete [] vertList;
+	delete [] faceList;
 }
 
 // Load an object (.obj) file
-void Object::Load(char* file, float s, float rx, float ry, float rz,
+void Object::Load(char* filename, float s, float rx, float ry, float rz,
 				  float tx, float ty, float tz)
 {
-	FILE* pObjectFile = fopen(file, "r");
-	if(!pObjectFile)
-		cout << "Failed to load " << file << "." << endl;
-	else
-		cout << "Successfully loaded " << file << "." << endl;
+  float x,y,z,len;
+  int i;
+  char letter;
+  Vertex v1,v2,crossP;
+  int ix,iy,iz;
+  // int *normCount;
+  FILE *fp;
 
-	char DataType[128];
-	float a, b, c;
-	unsigned int v1, v2, v3, t1, t2, t3, n1, n2, n3;
-	// Scan the file and count the faces and vertices
-	VertexCount = FaceCount = 0;
-	while(!feof(pObjectFile))
+  fp = fopen(filename, "r");
+  if (fp == NULL) { 
+    printf("Cannot open %s\n!", filename);
+    exit(0);
+  }
+
+  // Count the number of vertices and faces
+  while(!feof(fp))
+    {
+      fscanf(fp,"%c %f %f %f\n",&letter,&x,&y,&z);
+      if (letter == 'v')
 	{
-		fscanf(pObjectFile, "%s %f %f %f\n", &DataType, &a, &b, &c);
-		if(strcmp( DataType, "v" ) == 0)
-            VertexCount++;
-		else if(strcmp( DataType, "vt" ) == 0)
-			TextureCount++;
-		else if(strcmp( DataType, "vn" ) == 0)
-			NormalCount++;
-		else if(strcmp( DataType, "f" ) == 0)
-			FaceCount++;
+	  verts++;
 	}
-	pVertexList = new Vertex[VertexCount];
-	pFaceList = new Face[FaceCount];
-	pVertextTextureList = new Vertex[TextureCount];
-	pVertexNormalList = new Vertex[NormalCount];
-
-
-	fseek(pObjectFile, 0L, SEEK_SET);
-
-	cout << "Number of vertices: " << VertexCount << endl;
-	cout << "Number of faces: " << FaceCount << endl;
-	cout << "Number of VT: " << TextureCount << endl;
-	cout << "Number of VN: " << NormalCount << endl;
-
-	// Load and create the faces and vertices
-	int CurrentVertex = 0, CurrentNormal = 0, CurrentTexture = 0, CurrentFace = 0;
-	float MinimumX, MaximumX, MinimumY, MaximumY, MinimumZ, MaximumZ;
-	while(!feof(pObjectFile))
+      else
 	{
-
-        int res = fscanf(pObjectFile, "%s", DataType);
-        if (res == EOF)
-            break; // EOF = End Of File. Quit the loop.
-
-		if(strcmp( DataType, "v" ) == 0)
-		{
-			fscanf(pObjectFile, "%f %f %f\n", &a, &b, &c);
-			pVertexList[CurrentVertex].x = a;
-			pVertexList[CurrentVertex].y = b;
-			pVertexList[CurrentVertex].z = c;
-			// Track maximum and minimum coordinates for use in bounding boxes
-			if(CurrentVertex == 0)
-			{
-				MinimumX = MaximumX = a;
-				MinimumY = MaximumY = b;
-				MinimumZ = MaximumZ = c;
-			}
-			else
-			{
-				if(a < MinimumX)
-					MinimumX = a;
-				else if(a > MaximumX)
-					MaximumX = a;
-				if(b < MinimumY)
-					MinimumY = b;
-				else if(b > MaximumY)
-					MaximumY = b;
-				if(c < MinimumZ)
-					MinimumZ = c;
-				else if(c > MaximumZ)
-					MaximumZ = c;
-			}
-			CurrentVertex++;
-		}
-		else if(strcmp( DataType, "vt" ) == 0)
-		{
-			fscanf(pObjectFile, "%f %f %f\n", &a, &b, &c);
-			pVertextTextureList[CurrentTexture].x = a;
-			pVertextTextureList[CurrentTexture].y = b;
-			pVertextTextureList[CurrentTexture].z = c;
-			CurrentTexture++;
-		}else if(strcmp( DataType, "vn" ) == 0){
-			fscanf(pObjectFile, "%f %f %f\n", &a, &b, &c);
-			pVertexNormalList[CurrentNormal].x = a;
-			pVertexNormalList[CurrentNormal].y = b;
-			pVertexNormalList[CurrentNormal].z = c;
-			CurrentNormal++;
-		}
-		else if(strcmp( DataType, "f" ) == 0)
-		{
-			fscanf(pObjectFile, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &v1, &t1, &n1, &v2, &t2, &n2, &v3, &t3, &n3 );
-
-			// Convert to a zero-based index for convenience
-			pFaceList[CurrentFace].v1 = v1 - 1;
-			pFaceList[CurrentFace].v2 = v2 - 1;
-			pFaceList[CurrentFace].v3 = v3 - 1;
-
-			pFaceList[CurrentFace].t1 = t1 - 1;
-			pFaceList[CurrentFace].t2 = t2 - 1;
-			pFaceList[CurrentFace].t3 = t3 - 1;
-
-			pFaceList[CurrentFace].n1 = n1 - 1;
-			pFaceList[CurrentFace].n2 = n2 - 1;
-			pFaceList[CurrentFace].n3 = n3 - 1;			
-
-			CurrentFace++;
-		}
+	  faces++;
 	}
+    }
 
-	// Initialize the bounding box vertices
-	pBoundingBox[0].x = MinimumX; pBoundingBox[0].y = MinimumY; pBoundingBox[0].z = MinimumZ;
-	pBoundingBox[1].x = MaximumX; pBoundingBox[1].y = MinimumY; pBoundingBox[1].z = MinimumZ;
-	pBoundingBox[2].x = MinimumX; pBoundingBox[2].y = MaximumY; pBoundingBox[2].z = MinimumZ;
-	pBoundingBox[3].x = MaximumX; pBoundingBox[3].y = MaximumY; pBoundingBox[3].z = MinimumZ;
-	pBoundingBox[4].x = MinimumX; pBoundingBox[4].y = MinimumY; pBoundingBox[4].z = MaximumZ;
-	pBoundingBox[5].x = MaximumX; pBoundingBox[5].y = MinimumY; pBoundingBox[5].z = MaximumZ;
-	pBoundingBox[6].x = MinimumX; pBoundingBox[6].y = MaximumY; pBoundingBox[6].z = MaximumZ;
-	pBoundingBox[7].x = MaximumX; pBoundingBox[7].y = MaximumY; pBoundingBox[7].z = MaximumZ;
+  fclose(fp);
+
+  printf("verts : %d\n", verts);
+  printf("faces : %d\n", faces);
+
+  // Dynamic allocation of vertex and face lists
+  faceList = (Face *)malloc(sizeof(Face)*faces);
+  vertList = (Vertex *)malloc(sizeof(Vertex)*verts);
+  normList = (Vertex *)malloc(sizeof(Vertex)*verts);
+
+  fp = fopen(filename, "r");
+
+  // Read the veritces
+  for(i = 0;i < verts;i++)
+    {
+      fscanf(fp,"%c %f %f %f\n",&letter,&x,&y,&z);
+      vertList[i].x = x;
+      vertList[i].y = y;
+      vertList[i].z = z;
+    }
+
+  // Read the faces
+  for(i = 0;i < faces;i++)
+    {
+      fscanf(fp,"%c %d %d %d\n",&letter,&ix,&iy,&iz);
+      faceList[i].v1 = ix - 1;
+      faceList[i].v2 = iy - 1;
+      faceList[i].v3 = iz - 1;
+    }
+  fclose(fp);
+
+
+  // The part below calculates the normals of each vertex
+  normCount = (int *)malloc(sizeof(int)*verts);
+  for (i = 0;i < verts;i++)
+    {
+      normList[i].x = normList[i].y = normList[i].z = 0.0;
+      normCount[i] = 0;
+    }
+
+  for(i = 0;i < faces;i++)
+    {
+      v1.x = vertList[faceList[i].v2].x - vertList[faceList[i].v1].x;
+      v1.y = vertList[faceList[i].v2].y - vertList[faceList[i].v1].y;
+      v1.z = vertList[faceList[i].v2].z - vertList[faceList[i].v1].z;
+      v2.x = vertList[faceList[i].v3].x - vertList[faceList[i].v2].x;
+      v2.y = vertList[faceList[i].v3].y - vertList[faceList[i].v2].y;
+      v2.z = vertList[faceList[i].v3].z - vertList[faceList[i].v2].z;
+
+      crossP.x = v1.y*v2.z - v1.z*v2.y;
+      crossP.y = v1.z*v2.x - v1.x*v2.z;
+      crossP.z = v1.x*v2.y - v1.y*v2.x;
+
+      len = sqrt(crossP.x*crossP.x + crossP.y*crossP.y + crossP.z*crossP.z);
+
+      crossP.x = -crossP.x/len;
+      crossP.y = -crossP.y/len;
+      crossP.z = -crossP.z/len;
+
+      normList[faceList[i].v1].x = normList[faceList[i].v1].x + crossP.x;
+      normList[faceList[i].v1].y = normList[faceList[i].v1].y + crossP.y;
+      normList[faceList[i].v1].z = normList[faceList[i].v1].z + crossP.z;
+      normList[faceList[i].v2].x = normList[faceList[i].v2].x + crossP.x;
+      normList[faceList[i].v2].y = normList[faceList[i].v2].y + crossP.y;
+      normList[faceList[i].v2].z = normList[faceList[i].v2].z + crossP.z;
+      normList[faceList[i].v3].x = normList[faceList[i].v3].x + crossP.x;
+      normList[faceList[i].v3].y = normList[faceList[i].v3].y + crossP.y;
+      normList[faceList[i].v3].z = normList[faceList[i].v3].z + crossP.z;
+      normCount[faceList[i].v1]++;
+      normCount[faceList[i].v2]++;
+      normCount[faceList[i].v3]++;
+    }
+  for (i = 0;i < verts;i++)
+    {
+      normList[i].x = (float)normal_sign*normList[i].x / (float)normCount[i];
+      normList[i].y = (float)normal_sign*normList[i].y / (float)normCount[i];
+      normList[i].z = (float)normal_sign*normList[i].z / (float)normCount[i];
+    }
 
 	// Apply the initial transformations in order
 	LocalScale(s);
@@ -325,6 +310,15 @@ void Scene::Load(char* file)
 	cout << "Number of Objects Loaded: " << ObjectCount << endl;
 }
 
+Sphere::Sphere(float x_,float y_, float z_, float r_){
+	x_0 = x_; y_0 = y_; z_0 = z_; r = r_;
+}
+Vertex computeNormal(float x, float y, float z){
+	Vertex normal_;
+	
+	return normal_;
+}
+
 Camera::Camera()
 {
 	Position.x = 10.0;
@@ -460,61 +454,6 @@ Vertex Transform(float* matrix, Vertex& point)
 	temp.z = matrix[2]*point.x + matrix[6]*point.y + matrix[10]*point.z + matrix[14]*point.h;
 	temp.h = matrix[3]*point.x + matrix[7]*point.y + matrix[11]*point.z + matrix[15]*point.h;
 	return temp;
-}
-
-// Select a new object by intersecting the selection ray with all object faces
-int Select(int previous, Scene* pScene, Camera* pCamera, float x, float y)
-{
-	int select = previous;
-	float zp = 10000, z;
-	float s, t;
-	Vertex temp1, temp2, temp3;
-
-	for(int i = 0; i < pScene->ObjectCount; i++)
-	{
-		for(int j = 0; j < pScene->pObjectList[i].FaceCount; j++)
-		{
-			// Project each vertex into the standard view volume
-			temp1 = pScene->pObjectList[i].pVertexList[pScene->pObjectList[i].pFaceList[j].v1];
-			temp1 = Transform(pScene->pObjectList[i].ModelMatrix, temp1);
-			temp1 = Transform(pCamera->ViewingMatrix, temp1);
-			temp1 = Transform(pCamera->ProjectionMatrix, temp1);
-			temp1.Normalize();
-
-			temp2 = pScene->pObjectList[i].pVertexList[pScene->pObjectList[i].pFaceList[j].v2];
-			temp2 = Transform(pScene->pObjectList[i].ModelMatrix, temp2);
-			temp2 = Transform(pCamera->ViewingMatrix, temp2);
-			temp2 = Transform(pCamera->ProjectionMatrix, temp2);
-			temp2.Normalize();
-
-			temp3 = pScene->pObjectList[i].pVertexList[pScene->pObjectList[i].pFaceList[j].v3];
-			temp3 = Transform(pScene->pObjectList[i].ModelMatrix, temp3);
-			temp3 = Transform(pCamera->ViewingMatrix, temp3);
-			temp3 = Transform(pCamera->ProjectionMatrix, temp3);
-			temp3.Normalize();
-
-			// Use parametric equations to find the intersection between the selection ray
-			// and the current (transformed) face
-			t = ((temp1.x - temp3.x)*(y - temp3.y) - (temp1.y - temp3.y)*(x - temp3.x))/
-				((temp1.x - temp3.x)*(temp2.y - temp3.y) + (temp1.y - temp3.y)*(temp3.x - temp2.x));
-			if((temp1.x - temp3.x) != 0)
-                s = (x - temp3.x + (temp3.x - temp2.x)*t)/(temp1.x - temp3.x);
-			else
-				s = (y - temp3.y+(temp3.y - temp2.y)*t)/(temp1.y - temp3.y);
-			// Use the intersection if its valid (within the triangle) and closer
-			if((s >= 0) && (t >= 0) && ((s + t) <= 1))
-			{
-				z = temp1.z*s + temp2.z*t + (1 - s - t)*temp3.z;
-				if(z < zp)
-				{
-					zp = z;
-					select = i;
-				}
-			}
-		}
-	}
-
-	return select;
 }
 
 // Clip a polygon against view volume borders

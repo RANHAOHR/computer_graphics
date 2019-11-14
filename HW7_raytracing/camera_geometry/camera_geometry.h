@@ -17,7 +17,7 @@ public:
 class Face
 {
 public:
-	int v1, v2, v3, t1, t2, t3, n1, n2, n3;
+	int v1, v2, v3, n1, n2, n3;
 };
 
 class Object
@@ -31,15 +31,13 @@ public:
 	void WorldRotate(float rx, float ry, float rz);
 	void LocalRotate(float rx, float ry, float rz);
 	void LocalScale(float s);
-	Vertex* pBoundingBox;
-	Vertex* pVertexList;
-	int VertexCount;
-	Face* pFaceList;
-	int FaceCount;
-	Vertex* pVertexNormalList;
-	int NormalCount;
-	Vertex* pVertextTextureList;
-	int TextureCount;
+	Vertex* vertList;
+	int verts;
+	Face* faceList;
+	int faces;
+	Vertex* normList;
+	int* normCount;
+	int normal_sign;
 
 	float ModelMatrix[16];
 };
@@ -51,6 +49,18 @@ public:
 	Object* pObjectList;
 	int ObjectCount;
 };
+
+class Sphere
+{
+public:
+	float x_0, y_0, z_0, r;
+	Sphere(float x_,float y_, float z_, float r_);
+	Vertex *vertList, *normList;
+	int verts, faces;
+	Vertex computeNormal(float x, float y, float z);
+
+};
+
 
 class Camera
 {
@@ -77,7 +87,6 @@ public:
 };
 
 Vertex Transform(float* matrix, Vertex& point);
-int Select(int previous, Scene* pScene, Camera* pCamera, float x, float y);
 Vertex* ClipPolygon(Vertex* input, int* out_count);
 Vertex* checkClipX( Vertex &vert1, Vertex &vert2, int &length);
 Vertex* checkClipY( Vertex &vert1, Vertex &vert2,int &length);
