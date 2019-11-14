@@ -313,9 +313,17 @@ void Scene::Load(char* file)
 Sphere::Sphere(float x_,float y_, float z_, float r_){
 	x_0 = x_; y_0 = y_; z_0 = z_; r = r_;
 }
-Vertex computeNormal(float x, float y, float z){
+
+Vertex Sphere::computeNormal(float x, float y, float z){
+
 	Vertex normal_;
-	
+	normal_.x = x - x_0;
+	normal_.y = y - y_0;
+	normal_.z = z - z_0;
+
+	normal_.h = sqrt(normal_.x * normal_.x + normal_.y * normal_.y + normal_.z * normal_.z);
+
+	normal_.Normalize();
 	return normal_;
 }
 

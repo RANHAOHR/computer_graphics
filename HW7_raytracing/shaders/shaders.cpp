@@ -10,43 +10,16 @@
 
 using namespace std;
 
-LightSpec::LightSpec()
-{
-	R_ = 1.0;
-	G_ = 1.0;
-	B_ = 1.0;
-
-	lightCount = 1;
-
-	lightPosition[0] = 2.0; lightPosition[1] = 2.0; lightPosition[2] = 2.0; lightPosition[3] = 1.0; 
-
-	ambientColor[0] = 1.0; ambientColor[1] = 1.0; ambientColor[2] = 1.0; ambientColor[3] = 1.0; 
-	dissuseColor[0] = 1.0; dissuseColor[1] = 1.0; dissuseColor[2] = 1.0; dissuseColor[3] = 1.0; 
-	specularColor[0] = 1.0; specularColor[1] = 1.0; specularColor[2] = 1.0; specularColor[3] = 1.0; 
-
-}
-
-void LightSpec::lightSpecification(){
-
-	glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambientColor);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, dissuseColor);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, specularColor);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-}
-
-ShaderSpec::ShaderSpec(	char* file, int illumination){
-	illuminationMode = illumination;
+ShaderSpec::ShaderSpec(	char* file){
 	loadMaterials(file);
 
 	cout<< "ns " << ns_ << endl;
-	cout<< "d " << d_ << endl;
-	cout<< "m " << m_ << endl;
-	cout<< "F_0 " << F_0[0] << F_0[1] << F_0[2] << F_0[3] << endl;
 	cout<< "Ka " << K_a[0] << K_a[1] << K_a[2] << K_a[3] << endl;
 	cout<< "Kd " << K_d[0] << K_d[1] << K_d[2] << K_d[3] << endl;	
 	cout<< "Ks " << K_s[0] << K_s[1] << K_s[2] << K_s[3] << endl;
+	cout<< "Ia " << Ia[0] << Ia[1] << Ia[2] << Ia[3] << endl;
+	cout<< "Id " << Id[0] << Id[1] << Id[2] << Id[3] << endl;	
+	cout<< "Is " << Is[0] << Is[1] << Is[2] << Is[3] << endl;
 };
 
 
@@ -59,10 +32,10 @@ char *ShaderSpec::shaderFileRead(char *fn) {
 		cout<< "Failed to load " << fn << endl;
 		return " ";
 	}
-	// else
-	// {
-	// 	cout << "Successfully loaded " << fn << endl;
-	// }
+	else
+	{
+		cout << "Successfully loaded " << fn << endl;
+	}
 	
 	char *content = NULL;
 
@@ -96,14 +69,9 @@ void ShaderSpec::setShaders() {
 	//read the shader files and store the strings in corresponding char. arrays.
 	vs = shaderFileRead("phongshader.vert");
 
- 	if (illuminationMode == 0) //phong illumination
-	{
-		fs = shaderFileRead("phongshader.frag"); //phongshader,
-		printf("Using Phong Shader, With Phong Illumination........\n");
-	}else{
-		fs = shaderFileRead("cooktorrence_phong.frag"); //cooktorrence illumination, phong shader
-		printf("Using Phong Shader, With Cook-Torrance Illumination........\n");
-	}
+
+	fs = shaderFileRead("phongshader.frag"); //phongshader,
+
 
 	const char * vv = vs;
 	const char * ff = fs;
@@ -156,12 +124,20 @@ void ShaderSpec::setShaders() {
 
 void ShaderSpec::SetUniformParams(){
 
-	if (illuminationMode == 0) // phong illimination, regardless of shaders
-	{
 		GLint locns = glGetUniformLocation(program, "ns_");
 		if (locns == -1)
 	        std::cout << "Warning: can't find uniform variable ns_ !\n";
 	    glUniform1f(locns, ns_);
+
+		GLint locKra = glGetUniformLocation(program, "Kra");
+		if (locKra == -1)
+	        std::cout << "Warning: can't find uniform variable Kra !\n";
+	    glUniform1f(locKra, Kra);
+
+		GLint locKre = glGetUniformLocation(program, "Kre");
+		if (locKre == -1)
+	        std::cout << "Warning: can't find uniform variable Kre !\n";
+	    glUniform1f(locKre, Kre);
 
 		GLint locKa = glGetUniformLocation(program, "K_a");
 		if (locKa == -1)
@@ -177,36 +153,21 @@ void ShaderSpec::SetUniformParams(){
 		if (locKs == -1)
 	        std::cout << "Warning: can't find uniform variable K_s !\n";
 	    glUniform4f(locKs, K_s[0], K_s[1], K_s[2], K_s[3] );
-	}
 
-	if (illuminationMode == 1 ) // Cook-Torrance illumination
-	{
-		GLint locm = glGetUniformLocation(program, "m_");
-		if (locm == -1)
-	        std::cout << "Warning: can't find uniform variable m_ !\n";
-	    glUniform1f(locm, m_);
+		GLint locIa = glGetUniformLocation(program, "Ia");
+		if (locIa == -1)
+	        std::cout << "Warning: can't find uniform variable Ia !\n";
+	    glUniform4f(locIa, Ia[0], Ia[1], Ia[2], Ia[3] );
 
-		GLint locd = glGetUniformLocation(program, "d_");
-		if (locd == -1)
-	        std::cout << "Warning: can't find uniform variable d_ !\n";
-	    glUniform1f(locd, d_);
+		GLint locId = glGetUniformLocation(program, "Id");
+		if (locId == -1)
+	        std::cout << "Warning: can't find uniform variable Id !\n";
+	    glUniform4f(locId, Id[0], Id[1], Id[2], Id[3] );
 
-		GLint locs = glGetUniformLocation(program, "s_");
-		if (locs == -1)
-	        std::cout << "Warning: can't find uniform variable s_ !\n";
-	    GLfloat s_ = 1 - d_;
-	    glUniform1f(locs, s_);
-
-		GLint locF0 = glGetUniformLocation(program, "F_0");
-		if (locF0 == -1)
-	        std::cout << "Warning: can't find uniform variable F_0 !\n";
-	    glUniform4f(locF0, F_0[0], F_0[1], F_0[2], F_0[3] );
-
-		GLint locRd = glGetUniformLocation(program, "R_d");
-		if (locRd == -1)
-	        std::cout << "Warning: can't find uniform variable R_d !\n";
-	    glUniform4f(locRd, F_0[0], F_0[1], F_0[2], F_0[3] );
-	}
+		GLint locIs = glGetUniformLocation(program, "Is");
+		if (locIs == -1)
+	        std::cout << "Warning: can't find uniform variable Is !\n";
+	    glUniform4f(locIs, Is[0], Is[1], Is[2], Is[3] );	    
 
 }
 
@@ -224,19 +185,11 @@ void ShaderSpec::loadMaterials(char* file){
 		if(strcmp( DataType, "Ns" ) == 0){
 			fscanf(materialFile, "%f\n", &ns_);
 		}
-		else if(strcmp( DataType, "d" ) == 0){
-			fscanf(materialFile, "%f\n", &d_);
+		else if(strcmp( DataType, "Kre" ) == 0){
+			fscanf(materialFile, "%f\n", &Kre);
 		}
-		else if(strcmp( DataType, "m" ) == 0){
-			fscanf(materialFile, "%f\n", &m_);
-		}
-		else if(strcmp( DataType, "Rd" ) == 0){
-			fscanf(materialFile, "%f %f %f\n", &R_d[0], &R_d[1], &R_d[2]);
-			R_d[3] = 1.0;
-		}
-		else if(strcmp( DataType, "F0" ) == 0){
-			fscanf(materialFile, "%f %f %f\n", &F_0[0], &F_0[1], &F_0[2]);
-			F_0[3] = 1.0;
+		else if(strcmp( DataType, "Kra" ) == 0){
+			fscanf(materialFile, "%f\n", &Kra);
 		}
 		else if(strcmp( DataType, "Ka" ) == 0){
 			fscanf(materialFile, "%f %f %f\n", &K_a[0], &K_a[1], &K_a[2]);
@@ -250,6 +203,19 @@ void ShaderSpec::loadMaterials(char* file){
 			fscanf(materialFile, "%f %f %f\n", &K_s[0], &K_s[1], &K_s[2]);
 			K_s[3] = 1.0;
 		}
+		else if(strcmp( DataType, "Ia" ) == 0){
+			fscanf(materialFile, "%f %f %f\n", &Ia[0], &Ia[1], &Ia[2]);
+			Ia[3] = 1.0;
+		}		
+		else if(strcmp( DataType, "Id" ) == 0){
+			fscanf(materialFile, "%f %f %f\n", &Id[0], &Id[1], &Id[2]);
+			Id[3] = 1.0;
+		}	
+		else if(strcmp( DataType, "Is" ) == 0){
+			fscanf(materialFile, "%f %f %f\n", &Is[0], &Is[1], &Is[2]);
+			Is[3] = 1.0;
+		}
+
 
 	}
 }

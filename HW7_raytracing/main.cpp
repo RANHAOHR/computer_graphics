@@ -27,6 +27,7 @@ const int INITIAL_RES = 400;
 FrameBuffer* fb;
 
 Scene* pDisplayScene;
+Sphere* pObjectSphere;
 Camera* pDisplayCamera;
 
 void drawRect(double x, double y, double w, double h)
@@ -85,6 +86,24 @@ void	resize(int x,int y)
     printf("Resized to %d %d\n",x,y);
 }
 
+void lightSpecification(){
+
+  GLfloat lightPosition[] = {0, 0, 0,1.0}; //same with camera
+
+  GLfloat ambientColor[] = {1.0,1.0,1.0,1.0};
+  GLfloat dissuseColor[] = {1.0,1.0,1.0,1.0};
+  GLfloat specularColor[] = {1.0,1.0,1.0,1.0};
+
+  glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambientColor);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, dissuseColor);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, specularColor);
+
+
+  glEnable(GL_LIGHTING);
+  glEnable(GL_LIGHT0);
+}
 
 // This function is called whenever the mouse is pressed or released
 // button is a number 0 to 2 designating the button
