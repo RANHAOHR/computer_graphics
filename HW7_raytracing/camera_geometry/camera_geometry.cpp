@@ -333,7 +333,7 @@ Camera::Camera()
 	Position.y = 0.0;
 	Position.z = 0.0;
 
-	Pitch = ((float) M_PI)/2;
+	Pitch = 0;
 	Yaw = 0.0;
 	v.i = 0; v.j = 0; v.k = 1;
 	EnforceVectors();
@@ -425,6 +425,13 @@ void Camera::Perspective()
 	ProjectionMatrix[11] = -1.0;
 	ProjectionMatrix[14] = FarPlane*NearPlane/(NearPlane - FarPlane);
 	ProjectionMatrix[15] = 0.0;
+
+    cout << "ProjectionMatrix[0] "<< ProjectionMatrix[0] << endl;
+    cout << "ProjectionMatrix[5] "<< ProjectionMatrix[5] << endl;
+    cout << "ProjectionMatrix[10] "<< ProjectionMatrix[10] << endl;
+    cout << "ProjectionMatrix[14] "<< ProjectionMatrix[14] << endl;
+
+
 }
 
 // Calculate the new orthographic projection matrix; maps into (-1,1)x(-1,1)x(0,1)
