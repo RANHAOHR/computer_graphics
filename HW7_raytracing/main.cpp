@@ -214,6 +214,7 @@ void polygonPrimitive(FrameBuffer* fb) {
             }
 
 //            output_v = ClipPolygon(input_v, &length);
+
             float x1 = input_v[0].x/input_v[0].h;
             float y1 = input_v[0].y/input_v[0].h;
             float x2 = input_v[1].x/input_v[1].h;
@@ -322,10 +323,14 @@ void polygonPrimitive(FrameBuffer* fb) {
 
                         float z = (input_v[0].z +  input_v[1].z +  input_v[2].z) / 3;
                         glm::vec3 vert_(x4, y, z);
+                        cout << "ray_0" << endl;
                         glm::vec3 I_local = PhongShader(normal_, vert_ );
+                        cout << "ray_1" << endl;
 
-                        fb->buffer[(int)x4][(int)y] = rayTracing(vert_, normal_, I_local);
-
+                        if((int)x4 < fb->GetWidth() && (int)x4 > -1  && (int)y > -1 &&  (int)y < fb->GetHeight() ){
+                            fb->buffer[(int)x4][(int)y] = rayTracing(vert_, normal_, I_local);
+                        }
+                        cout << "ray_2" << endl;
                         y++;
                     }
                 }
@@ -347,12 +352,22 @@ void polygonPrimitive(FrameBuffer* fb) {
                     glm::vec3 vert_(x, y, z);
                     glm::vec3 I_local = PhongShader(normal_, vert_ );
 
-                    cout << "x4"<< x4 << endl;
-                    cout << "x5"<< x5 << endl;
-                    cout << "x"<< x << endl;
-                    cout << "y"<< y << endl;
+                    cout << "x4 "<< x4 << endl;
+                    cout << "x5 "<< x5 << endl;
+                    cout << "x "<< x << endl;
+                    cout << "y "<< y << endl;
                     cout << "z "<< z << endl;
-                    fb->buffer[(int)x][(int)y] = rayTracing(vert_, normal_, I_local);
+
+                    int x_int = (int)x;
+                    cout << "x_int "<< x_int << endl;
+                    int y_int = (int)y;
+                    cout << "y_int "<< y_int << endl;
+                    cout << "fb width "<< fb->GetWidth() << "fb height " << fb->GetHeight() << endl;
+
+                    if(x_int < fb->GetWidth() && x_int>-1 && y_int > -1 && y_int < fb->GetHeight() ){
+                        fb->buffer[x_int][y_int] = rayTracing(vert_, normal_, I_local);
+                    }
+
                     cout << "4"<< endl;
                     x++;
                 }
