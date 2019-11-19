@@ -70,6 +70,7 @@ Color rayTracing( glm::vec3 &vert, glm::vec3 &normal, glm::vec3 &I_local){
     glm::vec3 L_ = lightPosition - vert;
     float cos_r = glm::min(cos_i + (float)0.1, (float)1.0);
     glm::vec3 I_refract = cos_r * normal + sqrt( (1 - cos_i * cos_i)/ (1 - cos_r * cos_r) ) * (cos_i * normal -  L_);
+
     I_global.r = I_local[0] + sphereShader.Kre * I_reflect[0] + sphereShader.Kra * I_refract[0];
     I_global.g = I_local[1] + sphereShader.Kre * I_reflect[1] + sphereShader.Kra * I_refract[1];
     I_global.b = I_local[2] + sphereShader.Kre * I_reflect[2] + sphereShader.Kra * I_refract[2];
@@ -156,7 +157,7 @@ void SpherePrimitive(FrameBuffer* fb, int x_, int y_, float radius_){
     }
 }
 
-void polygonPrimitive(FrameBuffer* fb, int x_, int y_) {
+void polygonPrimitive(FrameBuffer* fb) {
 
     Vertex *input_v;
     Vertex *input_n;
@@ -182,23 +183,182 @@ void polygonPrimitive(FrameBuffer* fb, int x_, int y_) {
                 input_v[k] = Transform(pDisplayCamera->ProjectionMatrix, temp1);
 
                 //TODO:
-                temp2 = Transform(pDisplayScene->pObjectList[i].ModelMatrix, input_n[k]);
-                input_n[k] = Transform(pDisplayCamera->ViewingMatrix, temp2);
+                float output[16];
+
+                output[0] = pDisplayScene->pObjectList[i].ModelMatrix[0]; output[1] = pDisplayScene->pObjectList[i].ModelMatrix[1]; output[2] = pDisplayScene->pObjectList[i].ModelMatrix[2];
+                output[4] = pDisplayScene->pObjectList[i].ModelMatrix[4]; output[5] = pDisplayScene->pObjectList[i].ModelMatrix[5]; output[6] = pDisplayScene->pObjectList[i].ModelMatrix[6];
+                output[8] = pDisplayScene->pObjectList[i].ModelMatrix[8]; output[9] = pDisplayScene->pObjectList[i].ModelMatrix[9]; output[10] = pDisplayScene->pObjectList[i].ModelMatrix[10];
+                output[12] = output[13] = output[14] = 0;
+
+                output[3] = -1*(pDisplayScene->pObjectList[i].ModelMatrix[0] * pDisplayScene->pObjectList[i].ModelMatrix[12] + pDisplayScene->pObjectList[i].ModelMatrix[4] * pDisplayScene->pObjectList[i].ModelMatrix[13] + pDisplayScene->pObjectList[i].ModelMatrix[8] * pDisplayScene->pObjectList[i].ModelMatrix[14]);
+                output[7] = -1*(pDisplayScene->pObjectList[i].ModelMatrix[1] * pDisplayScene->pObjectList[i].ModelMatrix[12] + pDisplayScene->pObjectList[i].ModelMatrix[5] * pDisplayScene->pObjectList[i].ModelMatrix[13] + pDisplayScene->pObjectList[i].ModelMatrix[9] * pDisplayScene->pObjectList[i].ModelMatrix[14]);
+                output[11] = -1*(pDisplayScene->pObjectList[i].ModelMatrix[2] * pDisplayScene->pObjectList[i].ModelMatrix[12] + pDisplayScene->pObjectList[i].ModelMatrix[6] * pDisplayScene->pObjectList[i].ModelMatrix[13] + pDisplayScene->pObjectList[i].ModelMatrix[10] * pDisplayScene->pObjectList[i].ModelMatrix[14]);
+
+                output[15]= 1;
+
+                temp2 = Transform(output, input_n[k]);
+
+                output[0] = pDisplayCamera->ViewingMatrix[0]; output[1] = pDisplayCamera->ViewingMatrix[1]; output[2] = pDisplayCamera->ViewingMatrix[2];
+                output[4] = pDisplayCamera->ViewingMatrix[4]; output[5] = pDisplayCamera->ViewingMatrix[5]; output[6] = pDisplayCamera->ViewingMatrix[6];
+                output[8] = pDisplayCamera->ViewingMatrix[8]; output[9] = pDisplayCamera->ViewingMatrix[9]; output[10] = pDisplayCamera->ViewingMatrix[10];
+                output[12] = output[13] = output[14] = 0;
+
+                output[3] = -1*(pDisplayCamera->ViewingMatrix[0] * pDisplayCamera->ViewingMatrix[12] + pDisplayCamera->ViewingMatrix[4] * pDisplayCamera->ViewingMatrix[13] + pDisplayCamera->ViewingMatrix[8] * pDisplayCamera->ViewingMatrix[14]);
+                output[7] = -1*(pDisplayCamera->ViewingMatrix[1] * pDisplayCamera->ViewingMatrix[12] + pDisplayCamera->ViewingMatrix[5] * pDisplayCamera->ViewingMatrix[13] + pDisplayCamera->ViewingMatrix[9] * pDisplayCamera->ViewingMatrix[14]);
+                output[11] = -1*(pDisplayCamera->ViewingMatrix[2] * pDisplayCamera->ViewingMatrix[12] + pDisplayCamera->ViewingMatrix[6] * pDisplayCamera->ViewingMatrix[13] + pDisplayCamera->ViewingMatrix[10] * pDisplayCamera->ViewingMatrix[14]);
+
+                output[15]= 1;
+
+                input_n[k] = Transform(output, temp2);
 
             }
 
-            output_v = ClipPolygon(input_v, &length);
-            for(int k = 0; k < length; k++){
+//            output_v = ClipPolygon(input_v, &length);
+            float x1 = input_v[0].x/input_v[0].h;
+            float y1 = input_v[0].y/input_v[0].h;
+            float x2 = input_v[1].x/input_v[1].h;
+            float y2 = input_v[1].y/input_v[1].h;
+            float x3 = input_v[2].x/input_v[2].h;
+            float y3 = input_v[2].y/input_v[2].h;
 
-                int x = output_v[k].x/output_v[k].h;
-                int y = output_v[k].y/output_v[k].h;
-                glm::vec3 normal_(input_n[k].x,input_n[k].y,input_n[k].z);
-                glm::vec3 vert_(input_v[k].x,input_v[k].y,input_v[k].z);
-                glm::vec3 I_local = PhongShader(normal_, vert_ );
+            float x_min, x_mid, x_max;
+            float y_min, y_mid, y_max;
+            x_min = x1;
+            x_mid = x2;
+            x_max = x3;
+            y_min = y1;
+            y_mid = y2;
+            y_max = y3;
 
-                fb->buffer[x][y] = rayTracing(vert_, normal_, I_local);
+            if(x1 > x2) {
+                x_min = x2;
+                y_min = y2;
+                x_mid = x1;
+                y_mid = y1;
+            }
+            if(x_mid > x3){
+                x_max = x_mid;
+                x_mid = x3;
+                y_max = y_mid;
+                y_mid = y3;
+            }
+            if(x3 < x_min){
+                x_mid = x_min;
+                x_min = x3;
+                y_mid = y_min;
+                y_min = y3;
             }
 
+            cout << "0"<< endl;
+            float x4 = x_min;
+            while (x4 < x_max){
+                cout << "0.1"<< endl;
+                float y4 = y_min + (y_max-y_min) * (x4 - x_min) / (x_max-x_min);
+                float x5, y5;
+                if(x_mid == x_min){
+                    x5 = x4;
+                    y5 = y_mid + (y_max-y_mid) * (x5 - y_mid) / (x_max-x_mid);
+
+                }else{
+
+                    cout << "y_mid 1 "<< y_mid <<  endl;
+                    cout << "y_min 1 "<< y_min <<  endl;
+                    cout << "x_mid 1 "<< x_mid <<  endl;
+                    cout << "x_min 1 "<< x_min <<  endl;
+                    if(y_mid == y_min){
+                        y5 = y_min;
+                        x5 = x_mid +  (y5 - y_mid) * (x_max - x_mid) / (y_max - y_mid);
+                        cout << "x5 1 "<< x5 <<  endl;
+                    }else{
+
+                        float k_ = ((float)y_mid - (float)y_min)/((float)x_mid - (float)x_min);
+
+                        if(x_max == x_mid){
+                            x5 = x_mid;
+                            cout << "x5 2 "<< x5 <<  endl;
+                            y5 = y4 + k_ * (x5 - x4);
+                        }else{
+                            float k__ = (y_max - y_mid)/ (x_max - x_mid);
+                            y5 = k_ / (k_ - k__) * (y_mid - k__ / k_ * y4 + k__ * (x4 - x_mid));
+                            cout << "y5 3 "<< y5 <<  endl;
+                            cout << "y4 3 "<< y4 <<  endl;
+                            cout << "k_ 3 "<< k_ <<  endl;
+                            x5 = x4 + (y5 - y4) / k_;
+                            cout << "x5 3 "<< x5 <<  endl;
+                        }
+                    }
+                }
+
+                float x_min_prime, x_max_prime, y_min_prime, y_max_prime;
+                if(x4 < x5){
+                    x_min_prime = x4;
+                    x_max_prime = x5;
+                    y_min_prime = y4;
+                    y_max_prime = y5;
+                }else if (x4 > x5){
+                    x_min_prime = x5;
+                    x_max_prime = x4;
+                    y_min_prime = y5;
+                    y_max_prime = y4;
+                }else{
+                    if(y4 < y5){
+                        y_min_prime = y4;
+                        y_max_prime = y5;
+                    }else{
+                        y_min_prime = y5;
+                        y_max_prime = y4;
+                    }
+                    x_min_prime = x4;
+                    x_max_prime = x5;
+
+                    float y = y_min_prime;
+                    while (y < y_max_prime) {
+
+                        float nx = (input_n[0].x +  input_n[1].x +  input_n[2].x) / 3;
+                        float ny = (input_n[0].y +  input_n[1].y +  input_n[2].y) / 3;
+                        float nz = (input_n[0].z +  input_n[1].z +  input_n[2].z) / 3;
+
+                        glm::vec3 normal_(nx, ny, nz);
+
+                        float z = (input_v[0].z +  input_v[1].z +  input_v[2].z) / 3;
+                        glm::vec3 vert_(x4, y, z);
+                        glm::vec3 I_local = PhongShader(normal_, vert_ );
+
+                        fb->buffer[(int)x4][(int)y] = rayTracing(vert_, normal_, I_local);
+
+                        y++;
+                    }
+                }
+
+                float x = x_min_prime;
+
+                while (x < x_max_prime) {
+
+                    float k_  = (y5 - y4) / (x5 -x4);
+
+                    float y = y4 + k_ * (x - x4);
+                    float nx = (input_n[0].x +  input_n[1].x +  input_n[2].x) / 3;
+                    float ny = (input_n[0].y +  input_n[1].y +  input_n[2].y) / 3;
+                    float nz = (input_n[0].z +  input_n[1].z +  input_n[2].z) / 3;
+
+                    glm::vec3 normal_(nx, ny, nz);
+
+                    float z = (input_v[0].z +  input_v[1].z +  input_v[2].z) / 3;
+                    glm::vec3 vert_(x, y, z);
+                    glm::vec3 I_local = PhongShader(normal_, vert_ );
+
+                    cout << "x4"<< x4 << endl;
+                    cout << "x5"<< x5 << endl;
+                    cout << "x"<< x << endl;
+                    cout << "y"<< y << endl;
+                    cout << "z "<< z << endl;
+                    fb->buffer[(int)x][(int)y] = rayTracing(vert_, normal_, I_local);
+                    cout << "4"<< endl;
+                    x++;
+                }
+
+                x4++;
+            }
 
             delete[] input_v;
             input_v = NULL;
@@ -245,6 +405,7 @@ void display(void)
 
 //    SpherePrimitive(fb, disk_x, disk_y, pObjectSphere.r);
 
+    polygonPrimitive(fb);
 
     for(int y = 0; y < fb->GetHeight(); y++)
 	{
