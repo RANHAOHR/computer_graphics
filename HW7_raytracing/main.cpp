@@ -75,9 +75,9 @@ Color rayTracing( glm::vec3 &vert, glm::vec3 &normal, glm::vec3 &I_local){
     I_global.g = I_local[1] + sphereShader.Kre * I_reflect[1] + sphereShader.Kra * I_refract[1];
     I_global.b = I_local[2] + sphereShader.Kre * I_reflect[2] + sphereShader.Kra * I_refract[2];
 
-    cout << "r " <<  I_global.r << endl;
-    cout << "g " <<  I_global.g << endl;
-    cout << "b " <<  I_global.b << endl;
+    // cout << "r " <<  I_global.r << endl;
+    // cout << "g " <<  I_global.g << endl;
+    // cout << "b " <<  I_global.b << endl;
 
     return I_global;
 }
@@ -250,10 +250,10 @@ void polygonPrimitive(FrameBuffer* fb) {
                 y_min = y3;
             }
 
-            cout << "0"<< endl;
+            // cout << "0"<< endl;
             float x4 = x_min;
             while (x4 < x_max){
-                cout << "0.1"<< endl;
+                // cout << "0.1"<< endl;
                 float y4 = y_min + (y_max-y_min) * (x4 - x_min) / (x_max-x_min);
                 float x5, y5;
                 if(x_mid == x_min){
@@ -262,30 +262,30 @@ void polygonPrimitive(FrameBuffer* fb) {
 
                 }else{
 
-                    cout << "y_mid 1 "<< y_mid <<  endl;
-                    cout << "y_min 1 "<< y_min <<  endl;
-                    cout << "x_mid 1 "<< x_mid <<  endl;
-                    cout << "x_min 1 "<< x_min <<  endl;
+                    // cout << "y_mid 1 "<< y_mid <<  endl;
+                    // cout << "y_min 1 "<< y_min <<  endl;
+                    // cout << "x_mid 1 "<< x_mid <<  endl;
+                    // cout << "x_min 1 "<< x_min <<  endl;
                     if(y_mid == y_min){
                         y5 = y_min;
                         x5 = x_mid +  (y5 - y_mid) * (x_max - x_mid) / (y_max - y_mid);
-                        cout << "x5 1 "<< x5 <<  endl;
+                        // cout << "x5 1 "<< x5 <<  endl;
                     }else{
 
                         float k_ = ((float)y_mid - (float)y_min)/((float)x_mid - (float)x_min);
 
                         if(x_max == x_mid){
                             x5 = x_mid;
-                            cout << "x5 2 "<< x5 <<  endl;
+                            // cout << "x5 2 "<< x5 <<  endl;
                             y5 = y4 + k_ * (x5 - x4);
                         }else{
                             float k__ = (y_max - y_mid)/ (x_max - x_mid);
                             y5 = k_ / (k_ - k__) * (y_mid - k__ / k_ * y4 + k__ * (x4 - x_mid));
-                            cout << "y5 3 "<< y5 <<  endl;
-                            cout << "y4 3 "<< y4 <<  endl;
-                            cout << "k_ 3 "<< k_ <<  endl;
+                            // cout << "y5 3 "<< y5 <<  endl;
+                            // cout << "y4 3 "<< y4 <<  endl;
+                            // cout << "k_ 3 "<< k_ <<  endl;
                             x5 = x4 + (y5 - y4) / k_;
-                            cout << "x5 3 "<< x5 <<  endl;
+                            // cout << "x5 3 "<< x5 <<  endl;
                         }
                     }
                 }
@@ -323,14 +323,14 @@ void polygonPrimitive(FrameBuffer* fb) {
 
                         float z = (input_v[0].z +  input_v[1].z +  input_v[2].z) / 3;
                         glm::vec3 vert_(x4, y, z);
-                        cout << "ray_0" << endl;
+                        // cout << "ray_0" << endl;
                         glm::vec3 I_local = PhongShader(normal_, vert_ );
-                        cout << "ray_1" << endl;
+                        // cout << "ray_1" << endl;
 
                         if((int)x4 < fb->GetWidth() && (int)x4 > -1  && (int)y > -1 &&  (int)y < fb->GetHeight() ){
                             fb->buffer[(int)x4][(int)y] = rayTracing(vert_, normal_, I_local);
                         }
-                        cout << "ray_2" << endl;
+                        // cout << "ray_2" << endl;
                         y++;
                     }
                 }
@@ -352,23 +352,23 @@ void polygonPrimitive(FrameBuffer* fb) {
                     glm::vec3 vert_(x, y, z);
                     glm::vec3 I_local = PhongShader(normal_, vert_ );
 
-                    cout << "x4 "<< x4 << endl;
-                    cout << "x5 "<< x5 << endl;
-                    cout << "x "<< x << endl;
-                    cout << "y "<< y << endl;
-                    cout << "z "<< z << endl;
+                    // cout << "x4 "<< x4 << endl;
+                    // cout << "x5 "<< x5 << endl;
+                    // cout << "x "<< x << endl;
+                    // cout << "y "<< y << endl;
+                    // cout << "z "<< z << endl;
 
                     int x_int = (int)x;
-                    cout << "x_int "<< x_int << endl;
+                    // cout << "x_int "<< x_int << endl;
                     int y_int = (int)y;
-                    cout << "y_int "<< y_int << endl;
-                    cout << "fb width "<< fb->GetWidth() << "fb height " << fb->GetHeight() << endl;
+                    // cout << "y_int "<< y_int << endl;
+                    // cout << "fb width "<< fb->GetWidth() << "fb height " << fb->GetHeight() << endl;
 
                     if(x_int < fb->GetWidth() && x_int>-1 && y_int > -1 && y_int < fb->GetHeight() ){
                         fb->buffer[x_int][y_int] = rayTracing(vert_, normal_, I_local);
                     }
 
-                    cout << "4"<< endl;
+                    // cout << "4"<< endl;
                     x++;
                 }
 
@@ -386,9 +386,16 @@ void polygonPrimitive(FrameBuffer* fb) {
 // You should redraw your polygons here
 void display(void)
 {
+
+    //fb->~FrameBuffer();
+    //fb = new FrameBuffer(pDisplayCamera->ViewWidth, pDisplayCamera->ViewHeight);
     // Clear the background
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-   
+    
+    //glMatrixMode(GL_PROJECTION);
+    //glLoadIdentity();
+    pDisplayCamera->Perspective();
+
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	double w = 10/double(fb->GetWidth());
@@ -405,10 +412,10 @@ void display(void)
     input.x = pObjectSphere.x_0;
     input.y = pObjectSphere.y_0;
     input.z = pObjectSphere.z_0;
-    cout << "input x "<< input.x << endl;
-    cout << "input y "<< input.y << endl;
-    cout << "input z "<< input.z << endl;
-    cout << "input h "<< input.h << endl;
+    // cout << "input x "<< input.x << endl;
+    // cout << "input y "<< input.y << endl;
+    // cout << "input z "<< input.z << endl;
+    // cout << "input h "<< input.h << endl;
     Vertex	temp,temp1,temp2;
     temp = Transform(ModelMatrix,input);
     temp2 = Transform(pDisplayCamera->ViewingMatrix,temp);
@@ -418,7 +425,7 @@ void display(void)
     disk_x = input.x/input.h;
     disk_y = input.y/input.h;
 
-//    SpherePrimitive(fb, disk_x, disk_y, pObjectSphere.r);
+    SpherePrimitive(fb, disk_x, disk_y, pObjectSphere.r);
 
     polygonPrimitive(fb);
 
@@ -465,25 +472,65 @@ void	mouseMotion(int x, int y)
 	;
 }
 
-
+void clearBuffer(void){
+    Color c(0,0,0);
+    for (int i = 0; i < fb->GetHeight(); i++)
+    {
+        for (int j = 0; j < fb->GetWidth(); j++)
+        {
+            fb->buffer[j][i] = c;
+        }
+        
+    }
+    
+}
 // This function is called whenever there is a keyboard input
 // key is the ASCII value of the key pressed
 // x and y are the location of the mouse
 void	keyboard(unsigned char key, int x, int y)
 {
+    float increment=0.5;
+
     switch(key) {
     case 'q':                           /* Quit */
 		exit(1);
 		break;
 	case '-':
 		fb->Resize(fb->GetHeight()/2, fb->GetWidth()/2);
-            SpherePrimitive(fb, disk_x, disk_y, pObjectSphere.r);
+        display();
+        //display();
+            //SpherePrimitive(fb, disk_x, disk_y, pObjectSphere.r);
 //		  SpherePrimitive(fb, fb->GetWidth()*0.5, fb->GetHeight()*0.5, 10.0, Color(1,0,0));
 		break;
 	case '=':
 		fb->Resize(fb->GetHeight()*2, fb->GetWidth()*2);
-            SpherePrimitive(fb, disk_x, disk_y, pObjectSphere.r);
+        display();
+            //SpherePrimitive(fb, disk_x, disk_y, pObjectSphere.r);
 //		  SpherePrimitive(fb, fb->GetWidth()*0.5, fb->GetHeight()*0.5, 10.0, Color(1,0,0));
+		break;
+
+    case ']':
+		pDisplayCamera->MoveView(increment);
+        clearBuffer();
+        display();
+
+		break;
+	case '[':
+		pDisplayCamera->MoveView(-increment);
+        clearBuffer();
+        display();
+        break;
+    case '.':
+		pDisplayCamera->ScaleView(1.1);
+        clearBuffer();
+
+        display();
+		break;
+	case ',':
+        pDisplayCamera->ScaleView(0.9);
+
+        clearBuffer();
+        display();
 		break;
     default:
 		break;
