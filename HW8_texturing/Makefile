@@ -12,7 +12,7 @@ COMPILER_FLAGS = -Wall
 LINKER_FLAGS = -lglut -lGLEW -lGLU -lGL -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor  
 
 # OBJ_NAME specifies the name of our exectuable
-OBJ_NAME = as6
+OBJ_NAME = as8
 
 #This is the target that compiles our executable
 all: $(OBJS)

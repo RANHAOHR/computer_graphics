@@ -39,6 +39,8 @@ int shadingMode = 0;
 int lightSource = 0;
 int program=-1;
 
+float max_x, min_x, max_y, min_y, max_z, min_z; 
+float obj_h, obj_r, obj_x, obj_y, obj_z;
 
 //Parameters for Copper (From: "Computer Graphics Using OpenGL" BY F.S. Hill, Jr.) 
 GLfloat ambient_cont [] = {0.19125,0.0735,0.0225};
@@ -62,9 +64,39 @@ int MouseY = 0;
 bool MouseLeft = false;
 bool MouseRight = false;
 
+point textureCoordCylinder(point &v_){ // use center based mapping here
+	// compute v first: normalize to 0-1
 
+	point coord;
+	coord.y = (v_.z -  min_z) / obj_h; 
+	float delt_x = v_.x - obj_x;
+	float delt_y = v_.y - obj_y;
+	float theta_ = atan2(delt_y, delt_x); // from range (-pi , pi)
 
+	coord.x = (theta_ + PI )/  (2 * PI);
+ 
+	return coord;
+}
 
+point textureCoordSphere(point &v_){
+
+	// change center
+	obj_z = (max_z - min_z) / 2;
+
+	point coord;
+	float delt_x = v_.x - obj_x;
+	float delt_y = v_.y - obj_y;
+	float theta_ = atan2(delt_y, delt_x);
+
+	coord.x = (theta_ + PI )/  (2 * PI);
+	float delt_z = v_.z - obj_z;
+
+	float phi_ = atan2(sqrt(delt_x*delt_x + delt_y*delt_y), delt_z); // return (0, pi)
+	coord.y = phi_ / PI;
+
+	return  coord;
+
+}
 
 void DisplayFunc(void) 
 {
@@ -140,14 +172,18 @@ void DisplayFunc(void)
 			n1 = vertList[faceList[i].v1];
 			n2 = vertList[faceList[i].v2];
 			n3 = vertList[faceList[i].v3];
+
+			point coord1 = textureCoordCylinder(v1);
 			glNormal3f(n1.x, n1.y, n1.z);
-			glTexCoord2f (v1.x, v1.y);
+			glTexCoord2f (coord1.x, coord1.y);
 			glVertex3f(v1.x, v1.y, v1.z);
+			point coord2 = textureCoordCylinder(v2);		
 			glNormal3f(n2.x, n2.y, n2.z);
-			glTexCoord2f (v2.x, v2.y);
+			glTexCoord2f (coord2.x, coord2.y);
 			glVertex3f(v2.x, v2.y, v2.z);
+			point coord3 = textureCoordCylinder(v3);	
 			glNormal3f(n3.x, n3.y, n3.z);
-			glTexCoord2f (v3.x, v3.y);
+			glTexCoord2f (coord3.x, coord3.y);
 			glVertex3f(v3.x, v3.y, v3.z);
 		glEnd();
 
@@ -274,7 +310,7 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100,100);
 	glutInitWindowSize(320,320);
-	glutCreateWindow("Assignment 6");
+	glutCreateWindow("Assignment 8");
 
 
 
@@ -551,13 +587,58 @@ void meshReader (char *filename,int sign)
 
   fp = fopen(filename, "r");
 
+
+	max_x = max_y = max_z = -1000;
+	min_x = min_y = min_z = 1000;
   // Read the veritces
   for(i = 0;i < verts;i++)
     {
-      fscanf(fp,"%c %f %f %f\n",&letter,&x,&y,&z);
-      vertList[i].x = x;
-      vertList[i].y = y;
-      vertList[i].z = z;
+		fscanf(fp,"%c %f %f %f\n",&letter,&x,&y,&z);
+		vertList[i].x = x;
+		vertList[i].y = y;
+		vertList[i].z = z;
+
+		if (min_x > x)
+		{
+			min_x = x;
+		}
+
+	    if (max_x < x)
+		{
+			max_x = x;
+		}
+
+
+	    if (min_y > y)
+		{
+			min_y = y;
+		}
+
+
+	    if (max_y < y)
+		{
+			max_y = y;
+		}
+
+	    if (min_z > z)
+		{
+			min_z = z;
+		}
+
+	    if (max_z < z)
+		{
+			max_z = z;
+		}
+    }
+
+    obj_h = max_z - min_z;
+    obj_x = (max_x + min_x) /2;
+    obj_y = (max_y + min_y) /2;
+    obj_z = min_z;
+    if( (max_x - min_x) > (max_y - min_y) ){
+    	obj_r = (max_x - min_x);
+    }else{
+    	obj_r = (max_y - min_y);
     }
 
   // Read the faces
