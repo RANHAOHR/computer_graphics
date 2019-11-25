@@ -24,6 +24,9 @@ Spring 2006
 
 using namespace std;
 
+void Teapot();
+void Plane();
+void Shpere();
 
 //object related information
 int verts, faces, norms;    // Number of vertices, faces and normals in the system
@@ -68,10 +71,10 @@ point textureCoordCylinder(point &v_){ // use center based mapping here
 	// compute v first: normalize to 0-1
 
 	point coord;
-	coord.y = (v_.z -  min_z) / obj_h; 
+	coord.y = (v_.y -  min_y) / obj_h; 
 	float delt_x = v_.x - obj_x;
-	float delt_y = v_.y - obj_y;
-	float theta_ = atan2(delt_y, delt_x); // from range (-pi , pi)
+	float delt_z = v_.z - obj_z;
+	float theta_ = atan2(delt_z, delt_x); // from range (-pi , pi)
 
 	coord.x = (theta_ + PI )/  (2 * PI);
  
@@ -81,17 +84,17 @@ point textureCoordCylinder(point &v_){ // use center based mapping here
 point textureCoordSphere(point &v_){
 
 	// change center
-	obj_z = (max_z - min_z) / 2;
+	obj_y = (max_y - min_y) / 2;
 
 	point coord;
 	float delt_x = v_.x - obj_x;
-	float delt_y = v_.y - obj_y;
-	float theta_ = atan2(delt_y, delt_x);
+	float delt_z = v_.z - obj_z;
+	float theta_ = atan2(delt_z, delt_x);
 
 	coord.x = (theta_ + PI )/  (2 * PI);
-	float delt_z = v_.z - obj_z;
+	float delt_y = v_.y - obj_y;
 
-	float phi_ = atan2(sqrt(delt_x*delt_x + delt_y*delt_y), delt_z); // return (0, pi)
+	float phi_ = atan2(sqrt(delt_x*delt_x + delt_z*delt_z), delt_y); // return (0, pi)
 	coord.y = phi_ / PI;
 
 	return  coord;
@@ -161,6 +164,8 @@ void DisplayFunc(void)
 
     delete TGAImage;
 
+
+
 	for (int i = 0; i < faces; i++)
 	{
 		
@@ -169,19 +174,19 @@ void DisplayFunc(void)
 			v1 = vertList[faceList[i].v1];
 			v2 = vertList[faceList[i].v2];
 			v3 = vertList[faceList[i].v3];
-			n1 = vertList[faceList[i].v1];
-			n2 = vertList[faceList[i].v2];
-			n3 = vertList[faceList[i].v3];
+			n1 = normList[faceList[i].v1];
+			n2 = normList[faceList[i].v2];
+			n3 = normList[faceList[i].v3];
 
-			point coord1 = textureCoordCylinder(v1);
+			point coord1 = textureCoordSphere(v1);
 			glNormal3f(n1.x, n1.y, n1.z);
 			glTexCoord2f (coord1.x, coord1.y);
 			glVertex3f(v1.x, v1.y, v1.z);
-			point coord2 = textureCoordCylinder(v2);		
+			point coord2 = textureCoordSphere(v2);		
 			glNormal3f(n2.x, n2.y, n2.z);
 			glTexCoord2f (coord2.x, coord2.y);
 			glVertex3f(v2.x, v2.y, v2.z);
-			point coord3 = textureCoordCylinder(v3);	
+			point coord3 = textureCoordSphere(v3);	
 			glNormal3f(n3.x, n3.y, n3.z);
 			glTexCoord2f (coord3.x, coord3.y);
 			glVertex3f(v3.x, v3.y, v3.z);
@@ -322,9 +327,7 @@ int main(int argc, char **argv)
 
 	
 	//setShaders();
-	
-	meshReader("teapot.obj", 1);
-
+	Teapot();
 	glutMainLoop();
 
 	return 0;
@@ -631,14 +634,14 @@ void meshReader (char *filename,int sign)
 		}
     }
 
-    obj_h = max_z - min_z;
+    obj_h = max_y - min_y;
     obj_x = (max_x + min_x) /2;
-    obj_y = (max_y + min_y) /2;
-    obj_z = min_z;
-    if( (max_x - min_x) > (max_y - min_y) ){
+    obj_z = (max_z + min_z) /2;
+    obj_y = min_y;
+    if( (max_x - min_x) > (max_z - min_z) ){
     	obj_r = (max_x - min_x);
     }else{
-    	obj_r = (max_y - min_y);
+    	obj_r = (max_z - min_z);
     }
 
   // Read the faces
@@ -648,6 +651,10 @@ void meshReader (char *filename,int sign)
       faceList[i].v1 = ix - 1;
       faceList[i].v2 = iy - 1;
       faceList[i].v3 = iz - 1;
+
+		faceList[i].n1 = ix - 1;
+		faceList[i].n2 = iy - 1;
+		faceList[i].n3 = iz - 1;
     }
   fclose(fp);
 
@@ -699,4 +706,148 @@ void meshReader (char *filename,int sign)
       normList[i].z = (float)sign*normList[i].z / (float)normCount[i];
     }
 
+}
+
+void Teapot(){
+	meshReader("teapot.obj", 1);
+}
+
+// void Plane(){
+// 	float width_ = 20;
+// 	float height_ = 20;
+// 	float x_0 = width_ / 2;
+// 	float y_0 = height_ / 2;
+
+// 	float z_ = -8.0; 
+// 	int sample_x = 10;
+// 	int sample_y = 10;
+
+// 	float delta_x = width_ / sample_x;
+// 	float delta_y = height_ / sample_y;
+
+// 	int verts = sample_x * sample_y;
+
+// 	vertList = (point *)malloc(sizeof(point)*verts);
+// 	normList = (point *)malloc(sizeof(point)*verts);
+
+// 	for (int i = 0; i < sample_y; ++i) //y
+// 	{
+// 		for (int j = 0; j < sample_x; ++j) //x
+// 		{
+// 			vertList[i*sample_x+j].x = j * delta_x;
+// 			vertList[i*sample_x+j].y = i * delta_y;
+// 			vertList[i*sample_x+j].z = z_;
+
+// 			normList[i*sample_x+j].x = 0;
+// 			normList[i*sample_x+j].y = 0;
+// 			normList[i*sample_x+j].z = 1;				
+// 		}
+// 	}
+
+// 	int faces = 2 * (sample_y -1 ) *(sample_x -1 );
+// 	faceList = (faceStruct *)malloc(sizeof(faceStruct)*faces);
+// 	int face_i = 0;
+// 	while (face_i < faces)
+// 	{
+// 		int v1 = face_i / 2;
+// 		faceList[face_i].v1 = v1;
+// 		faceList[face_i].v2 = v1 + 1;
+// 		faceList[face_i].v3 = v1 + sample_x;
+
+// 		faceList[face_i+1].v1 = v1 + 1;
+// 		faceList[face_i+1].v2 = v1 + sample_x;
+// 		faceList[face_i+1].v3 = v1 + sample_x + 1;
+
+// 		face_i +=2;
+// 	}
+
+
+// }
+
+
+// Load an object (.obj) file
+void load(char* file, int sign)
+{
+	FILE* pObjectFile = fopen(file, "r");
+	if(!pObjectFile)
+		cout << "Failed to load " << file << "." << endl;
+	else
+		cout << "Successfully loaded " << file << "." << endl;
+
+	char DataType[128];
+	float a, b, c;
+	unsigned int v1, v2, v3, t1, t2, t3, n1, n2, n3;
+	// Scan the file and count the faces and vertices
+	verts = faces = norms = 0;
+	while(!feof(pObjectFile))
+	{
+		fscanf(pObjectFile, "%s %f %f %f\n", &DataType, &a, &b, &c);
+		if(strcmp( DataType, "v" ) == 0)
+            verts++;
+		else if(strcmp( DataType, "vn" ) == 0)
+			norms++;
+		else if(strcmp( DataType, "f" ) == 0)
+			faces++;
+	}
+	faceList = (faceStruct *)malloc(sizeof(faceStruct)*faces);
+	vertList = (point *)malloc(sizeof(point)*verts);
+	normList = (point *)malloc(sizeof(point)*verts);
+
+
+	fseek(pObjectFile, 0L, SEEK_SET);
+
+	cout << "Number of vertices: " << verts << endl;
+	cout << "Number of faces: " << faces << endl;
+	cout << "Number of VN: " << norms << endl;
+
+	// Load and create the faces and vertices
+	int CurrentVertex = 0, CurrentNormal = 0, CurrentTexture = 0, CurrentFace = 0;
+	while(!feof(pObjectFile))
+	{
+
+        int res = fscanf(pObjectFile, "%s", DataType);
+        if (res == EOF)
+            break; // EOF = End Of File. Quit the loop.
+
+		if(strcmp( DataType, "v" ) == 0)
+		{
+			fscanf(pObjectFile, "%f %f %f\n", &a, &b, &c);
+			vertList[CurrentVertex].x = a;
+			vertList[CurrentVertex].y = b;
+			vertList[CurrentVertex].z = c;
+
+			CurrentVertex++;
+		}else if(strcmp( DataType, "vn" ) == 0){
+			fscanf(pObjectFile, "%f %f %f\n", &a, &b, &c);
+			normList[CurrentNormal].x = a;
+			normList[CurrentNormal].y = b;
+			normList[CurrentNormal].z = c;
+			CurrentNormal++;
+		}
+		else if(strcmp( DataType, "f" ) == 0)
+		{
+			fscanf(pObjectFile, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &v1, &t1, &n1, &v2, &t2, &n2, &v3, &t3, &n3 );
+
+			// Convert to a zero-based index for convenience
+			faceList[CurrentFace].v1 = v1 - 1;
+			faceList[CurrentFace].v2 = v2 - 1;
+			faceList[CurrentFace].v3 = v3 - 1;
+
+			faceList[CurrentFace].n1 = n1 - 1;
+			faceList[CurrentFace].n2 = n2 - 1;
+			faceList[CurrentFace].n3 = n3 - 1;			
+
+			CurrentFace++;
+		}
+	}
+
+}
+
+
+void Plane(){
+	load("plane.obj", 1);
+}
+
+void Shpere(){
+	load("sphere.obj", 1);
 }
