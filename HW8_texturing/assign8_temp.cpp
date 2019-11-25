@@ -26,16 +26,18 @@ using namespace std;
 
 void Teapot();
 void Plane();
-void Shpere();
+void Sphere();
 
 //object related information
 int verts, faces, norms;    // Number of vertices, faces and normals in the system
 point *vertList, *normList; // Vertex and Normal Lists
 faceStruct *faceList;	    // Face List
 
+int mapping_code = 0;
 
 //Illimunation and shading related declerations
 char *shaderFileRead(char *fn);
+void meshReader (char *filename,int sign);
 GLuint vertex_shader,fragment_shader,p;
 int illimunationMode = 0;
 int shadingMode = 0;
@@ -101,32 +103,10 @@ point textureCoordSphere(point &v_){
 
 }
 
-void DisplayFunc(void) 
-{
+void mappingFunction(int mapping_method, const char *fileName){
     GLuint id ;
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	//load projection and viewing transforms
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-        
-	gluPerspective(60,(GLdouble) WindowWidth/WindowHeight,0.01,10000);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	gluLookAt(CameraRadius*cos(CameraTheta)*sin(CameraPhi),
-			  CameraRadius*cos(CameraPhi),
-			  CameraRadius*sin(CameraTheta)*sin(CameraPhi),
-			  0,0,0,
-			  0,1,0);
-
-	glEnable(GL_DEPTH_TEST);	
-	glEnable(GL_TEXTURE_2D);
-
-	//	setParameters(program);
-
 	// Load image from tga file
-	TGA *TGAImage	= new TGA("./sphericalenvironmentmap/house2.tga");
+	TGA *TGAImage	= new TGA(fileName);
 	//TGA *TGAImage	= new TGA("./cubicenvironmentmap/cm_right.tga");
 
 	// Use to dimensions of the image as the texture dimensions
@@ -164,13 +144,11 @@ void DisplayFunc(void)
 
     delete TGAImage;
 
-
-
 	for (int i = 0; i < faces; i++)
 	{
 		
 		glBegin(GL_TRIANGLES);
-			point v1, v2, v3, n1, n2, n3;
+			point v1, v2, v3, n1, n2, n3, coord1,coord2, coord3;
 			v1 = vertList[faceList[i].v1];
 			v2 = vertList[faceList[i].v2];
 			v3 = vertList[faceList[i].v3];
@@ -178,21 +156,93 @@ void DisplayFunc(void)
 			n2 = normList[faceList[i].v2];
 			n3 = normList[faceList[i].v3];
 
-			point coord1 = textureCoordSphere(v1);
+			if (mapping_method == 1)
+			{
+				coord1 = textureCoordCylinder(v1);
+				coord2 = textureCoordCylinder(v2);
+				coord3 = textureCoordCylinder(v3);	
+			}else{
+				coord1 = textureCoordSphere(v1);
+				coord2 = textureCoordSphere(v2);
+				coord3 = textureCoordSphere(v3);					
+			}
+
 			glNormal3f(n1.x, n1.y, n1.z);
 			glTexCoord2f (coord1.x, coord1.y);
 			glVertex3f(v1.x, v1.y, v1.z);
-			point coord2 = textureCoordSphere(v2);		
+	
 			glNormal3f(n2.x, n2.y, n2.z);
 			glTexCoord2f (coord2.x, coord2.y);
 			glVertex3f(v2.x, v2.y, v2.z);
-			point coord3 = textureCoordSphere(v3);	
+				
 			glNormal3f(n3.x, n3.y, n3.z);
 			glTexCoord2f (coord3.x, coord3.y);
 			glVertex3f(v3.x, v3.y, v3.z);
 		glEnd();
 
 	}	
+}
+
+void DisplayFunc(void) 
+{
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//load projection and viewing transforms
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+        
+	gluPerspective(60,(GLdouble) WindowWidth/WindowHeight,0.01,10000);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt(CameraRadius*cos(CameraTheta)*sin(CameraPhi),
+			  CameraRadius*cos(CameraPhi),
+			  CameraRadius*sin(CameraTheta)*sin(CameraPhi),
+			  0,0,0,
+			  0,1,0);
+
+	glEnable(GL_DEPTH_TEST);	
+	glEnable(GL_TEXTURE_2D);
+
+	//	setParameters(program);
+	switch(mapping_code % 5)
+	{
+	    case 0:{
+            Plane();
+            const char *path1 = "./planartexturemap/abstract2.tga";
+            mappingFunction(1, path1);
+            break;
+
+        }
+	    case 1:{
+	        Sphere();
+            const char *path2 = "./planartexturemap/abstract2.tga";
+            mappingFunction(1, path2);
+            break;
+	    }
+	    case 2:{
+	        Teapot();
+            const char *path3 = "./planartexturemap/abstract2.tga";
+            mappingFunction(1, path3);
+            break;
+	    }
+	    case 3:{
+	        Sphere();
+            const char *path4 = "./sphericaltexturemap/earth2.tga";
+            mappingFunction(2, path4);
+            break;
+	    }
+	    case 4:{
+	        Teapot();
+            const char *path5 = "./sphericaltexturemap/earth2.tga";
+            mappingFunction(2, path5);
+            break;
+	    }
+
+        default:
+            break;
+	}
 
 	//glutSolidTeapot(1);
 //	setParameters(program);
@@ -253,7 +303,7 @@ void KeyboardFunc(unsigned char key, int x, int y)
 	{
 	case 'A':
 	case 'a':
-		ShowAxes = !ShowAxes;
+		mapping_code+=1;
 		break;
 	case 'Q':
 	case 'q':
@@ -327,7 +377,9 @@ int main(int argc, char **argv)
 
 	
 	//setShaders();
-	Teapot();
+	// Teapot();
+	// Sphere();
+	// Plane();
 	glutMainLoop();
 
 	return 0;
@@ -550,51 +602,52 @@ char *shaderFileRead(char *fn) {
 
 void meshReader (char *filename,int sign)
 {
-  float x,y,z,len;
-  int i;
-  char letter;
-  point v1,v2,crossP;
-  int ix,iy,iz;
-  int *normCount;
-  FILE *fp;
+	float x,y,z,len;
+	int i;
+	char letter;
+	point v1,v2,crossP;
+	int ix,iy,iz;
+	int *normCount;
+	FILE *fp;
 
-  fp = fopen(filename, "r");
-  if (fp == NULL) { 
-    printf("Cannot open %s\n!", filename);
-    exit(0);
-  }
+	fp = fopen(filename, "r");
+	if (fp == NULL) { 
+	printf("Cannot open %s\n!", filename);
+	exit(0);
+	}
 
-  // Count the number of vertices and faces
-  while(!feof(fp))
-   {
-      fscanf(fp,"%c %f %f %f\n",&letter,&x,&y,&z);
-      if (letter == 'v')
+	verts = faces = norms = 0;
+	// Count the number of vertices and faces
+	while(!feof(fp))
+	{
+	  fscanf(fp,"%c %f %f %f\n",&letter,&x,&y,&z);
+	  if (letter == 'v')
 	  {
 		  verts++;
 	  }
-      else
+	  else
 	  {
 		  faces++;
 	  }
-   }
+	}
 
-  fclose(fp);
+	fclose(fp);
 
-  printf("verts : %d\n", verts);
-  printf("faces : %d\n", faces);
+	printf("verts : %d\n", verts);
+	printf("faces : %d\n", faces);
 
-  // Dynamic allocation of vertex and face lists
-  faceList = (faceStruct *)malloc(sizeof(faceStruct)*faces);
-  vertList = (point *)malloc(sizeof(point)*verts);
-  normList = (point *)malloc(sizeof(point)*verts);
+	// Dynamic allocation of vertex and face lists
+	faceList = (faceStruct *)malloc(sizeof(faceStruct)*faces);
+	vertList = (point *)malloc(sizeof(point)*verts);
+	normList = (point *)malloc(sizeof(point)*verts);
 
-  fp = fopen(filename, "r");
+	fp = fopen(filename, "r");
 
 
 	max_x = max_y = max_z = -1000;
 	min_x = min_y = min_z = 1000;
   // Read the veritces
-  for(i = 0;i < verts;i++)
+	for(i = 0;i < verts;i++)
     {
 		fscanf(fp,"%c %f %f %f\n",&letter,&x,&y,&z);
 		vertList[i].x = x;
@@ -645,7 +698,7 @@ void meshReader (char *filename,int sign)
     }
 
   // Read the faces
-  for(i = 0;i < faces;i++)
+	for(i = 0;i < faces;i++)
     {
       fscanf(fp,"%c %d %d %d\n",&letter,&ix,&iy,&iz);
       faceList[i].v1 = ix - 1;
@@ -656,18 +709,18 @@ void meshReader (char *filename,int sign)
 		faceList[i].n2 = iy - 1;
 		faceList[i].n3 = iz - 1;
     }
-  fclose(fp);
+	fclose(fp);
 
 
   // The part below calculates the normals of each vertex
-  normCount = (int *)malloc(sizeof(int)*verts);
-  for (i = 0;i < verts;i++)
+	normCount = (int *)malloc(sizeof(int)*verts);
+	for (i = 0;i < verts;i++)
     {
       normList[i].x = normList[i].y = normList[i].z = 0.0;
       normCount[i] = 0;
     }
 
-  for(i = 0;i < faces;i++)
+	for(i = 0;i < faces;i++)
     {
       v1.x = vertList[faceList[i].v2].x - vertList[faceList[i].v1].x;
       v1.y = vertList[faceList[i].v2].y - vertList[faceList[i].v1].y;
@@ -699,7 +752,7 @@ void meshReader (char *filename,int sign)
       normCount[faceList[i].v2]++;
       normCount[faceList[i].v3]++;
     }
-  for (i = 0;i < verts;i++)
+	for (i = 0;i < verts;i++)
     {
       normList[i].x = (float)sign*normList[i].x / (float)normCount[i];
       normList[i].y = (float)sign*normList[i].y / (float)normCount[i];
@@ -775,13 +828,13 @@ void load(char* file, int sign)
 		cout << "Successfully loaded " << file << "." << endl;
 
 	char DataType[128];
-	float a, b, c;
+	float x, y, z;
 	unsigned int v1, v2, v3, t1, t2, t3, n1, n2, n3;
 	// Scan the file and count the faces and vertices
 	verts = faces = norms = 0;
 	while(!feof(pObjectFile))
 	{
-		fscanf(pObjectFile, "%s %f %f %f\n", &DataType, &a, &b, &c);
+		fscanf(pObjectFile, "%s %f %f %f\n", &DataType, &x, &y, &z);
 		if(strcmp( DataType, "v" ) == 0)
             verts++;
 		else if(strcmp( DataType, "vn" ) == 0)
@@ -802,6 +855,8 @@ void load(char* file, int sign)
 
 	// Load and create the faces and vertices
 	int CurrentVertex = 0, CurrentNormal = 0, CurrentTexture = 0, CurrentFace = 0;
+	max_x = max_y = max_z = -1000;
+	min_x = min_y = min_z = 1000;
 	while(!feof(pObjectFile))
 	{
 
@@ -811,17 +866,59 @@ void load(char* file, int sign)
 
 		if(strcmp( DataType, "v" ) == 0)
 		{
-			fscanf(pObjectFile, "%f %f %f\n", &a, &b, &c);
-			vertList[CurrentVertex].x = a;
-			vertList[CurrentVertex].y = b;
-			vertList[CurrentVertex].z = c;
+			fscanf(pObjectFile, "%f %f %f\n", &x, &y, &z);
+			vertList[CurrentVertex].x = x;
+			vertList[CurrentVertex].y = y;
+			vertList[CurrentVertex].z = z;
 
+			if (min_x > x)
+			{
+				min_x = x;
+			}
+
+		    if (max_x < x)
+			{
+				max_x = x;
+			}
+
+
+		    if (min_y > y)
+			{
+				min_y = y;
+			}
+
+
+		    if (max_y < y)
+			{
+				max_y = y;
+			}
+
+		    if (min_z > z)
+			{
+				min_z = z;
+			}
+
+		    if (max_z < z)
+			{
+				max_z = z;
+			}
+	    
+
+		    obj_h = max_y - min_y;
+		    obj_x = (max_x + min_x) /2;
+		    obj_z = (max_z + min_z) /2;
+		    obj_y = min_y;
+		    if( (max_x - min_x) > (max_z - min_z) ){
+		    	obj_r = (max_x - min_x);
+		    }else{
+		    	obj_r = (max_z - min_z);
+		    }
 			CurrentVertex++;
 		}else if(strcmp( DataType, "vn" ) == 0){
-			fscanf(pObjectFile, "%f %f %f\n", &a, &b, &c);
-			normList[CurrentNormal].x = a;
-			normList[CurrentNormal].y = b;
-			normList[CurrentNormal].z = c;
+			fscanf(pObjectFile, "%f %f %f\n", &x, &y, &z);
+			normList[CurrentNormal].x = x;
+			normList[CurrentNormal].y = y;
+			normList[CurrentNormal].z = z;
 			CurrentNormal++;
 		}
 		else if(strcmp( DataType, "f" ) == 0)
@@ -848,6 +945,6 @@ void Plane(){
 	load("plane.obj", 1);
 }
 
-void Shpere(){
+void Sphere(){
 	load("sphere.obj", 1);
 }
