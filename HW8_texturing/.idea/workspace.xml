@@ -9,14 +9,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6348b2c8-2953-4fbc-be1f-9751d4df5c10" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/HW8_texturing.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/as8" beforeDir="false" afterPath="$PROJECT_DIR$/as8" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assign8_temp.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/assign8_temp.cpp" afterDir="false" />
-    </list>
+    <list default="true" id="6348b2c8-2953-4fbc-be1f-9751d4df5c10" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,6 +28,12 @@
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -58,7 +57,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1574699184659</updated>
-      <workItem from="1574699185930" duration="566000" />
+      <workItem from="1574699185930" duration="1309000" />
     </task>
     <servers />
   </component>

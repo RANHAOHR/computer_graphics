@@ -51,7 +51,7 @@ float obj_h, obj_r, obj_x, obj_y, obj_z;
 GLfloat ambient_cont [] = {0.19125,0.0735,0.0225};
 GLfloat diffuse_cont [] = {0.7038,0.27048,0.0828};
 GLfloat specular_cont [] = {0.256777,0.137622,0.086014};
-GLfloat exponent = 12.8;
+GLfloat exponent = 5000;
 
 
 //Projection, camera contral related declerations
@@ -69,6 +69,22 @@ int MouseY = 0;
 bool MouseLeft = false;
 bool MouseRight = false;
 
+float norm(point &p_){
+
+	float res = sqrt(p_.x * p_.x + p_.y * p_.y + p_.z * p_.z);
+	return res;
+
+}
+
+point cross(point &p1, point &p2){
+
+	point res;
+	res.x = p1.y * p2.z - p2.y * p1.z;
+	res.y = p1.z * p2.x - p2.z * p1.x;
+	res.z = p1.x * p2.y - p1.y * p2.x;
+	return res;
+
+}
 point textureCoordCylinder(point &v_){ // use center based mapping here
 	// compute v first: normalize to 0-1
 
@@ -103,8 +119,117 @@ point textureCoordSphere(point &v_){
 
 }
 
+point textureSphrereNormalmapping(point &v_, point &n_){
+
+	float norm_n = norm(n_);
+
+	n_.x = n_.x / norm_n;
+	n_.y = n_.y / norm_n;
+	n_.z = n_.z / norm_n;
+
+	//find the intersetion between n_ and sphere, using quadratic
+	float a = n_.x * n_.x + n_.y * n_.y + n_.z * n_.z;
+	float b = 2 * (n_.x * (v_.x - obj_x) + n_.y * (v_.y - obj_y) + n_.z * (v_.z - obj_z));
+	float c = (v_.x - obj_x) * (v_.x - obj_x) + (v_.y - obj_y) * (v_.y - obj_y) + (v_.z - obj_z) * (v_.z - obj_z) - obj_r * obj_r;
+
+	float t_ = (-1 *b + sqrt(b * b - 4 * a * c) ) / (2 * a);
+
+	float delta_z = t_ * n_.z + v_.z - obj_z;
+	float delta_x = t_ * n_.x + v_.x - obj_x;
+	float delta_y = t_ * n_.y + v_.y - obj_y;
+	float theta_ = atan2(delta_z, delta_x);
+
+	point coord;
+
+	coord.x = (theta_ + PI )/  (2 * PI);
+
+	float sin_ = sqrt( ( delta_x*delta_x + delta_z*delta_z ) / (obj_r * obj_r) );
+
+	float phi_ = atan2(sin_, delta_y / obj_r); // return (0, pi)
+	coord.y = phi_ / PI;
+
+	return coord;
+}
+
+point environmentMapping(point &v_, point &n_){
+
+	point v_in;
+	v_in.x = CameraRadius*cos(CameraTheta)*sin(CameraPhi) - v_.x;
+	v_in.y = CameraRadius*cos(CameraPhi) - v_.y;
+	v_in.z = CameraRadius*sin(CameraTheta)*sin(CameraPhi) - v_.z;
+	float norm_in = norm(v_in);
+	float norm_n = norm(n_);
+	float cos_ = (v_in.x * n_.x + v_in.y * n_.y + v_in.z * n_.z) / (norm_in * norm_n);
+
+	v_in.x = v_in.x / norm_in;
+	v_in.y = v_in.y / norm_in;
+	v_in.z = v_in.z / norm_in;
+
+	n_.x = n_.x / norm_n;
+	n_.y = n_.y / norm_n;
+	n_.z = n_.z / norm_n;
+
+	point v_out;
+	v_out.x = 2 * cos_ * n_.x - v_in.x;
+	v_out.y = 2 * cos_ * n_.y - v_in.y;
+	v_out.z = 2 * cos_ * n_.z - v_in.z;
+	float norm_out = norm(v_out);
+
+	v_out.x = v_out.x / norm_out;
+	v_out.y = v_out.y / norm_out;
+	v_out.z = v_out.z / norm_out;
+	//find the intersetion between v_out and sphere, using quadratic
+	float a = v_out.x * v_out.x + v_out.y * v_out.y + v_out.z * v_out.z;
+	float b = 2 * (v_out.x * (v_.x - obj_x) + v_out.y * (v_.y - obj_y) + v_out.z * (v_.z - obj_z));
+	float c = (v_.x - obj_x) * (v_.x - obj_x) + (v_.y - obj_y) * (v_.y - obj_y) + (v_.z - obj_z) * (v_.z - obj_z) - obj_r * obj_r;
+
+	float t_ = (-1 *b + sqrt(b * b - 4 * a * c) ) / (2 * a);
+
+	float delta_z = t_ * v_out.z + v_.z - obj_z;
+	float delta_x = t_ * v_out.x + v_.x - obj_x;
+	float delta_y = t_ * v_out.y + v_.y - obj_y;
+	float theta_ = atan2(delta_z, delta_x);
+
+	point coord;
+
+	coord.x = (theta_ + PI )/  (2 * PI);
+
+	float sin_ = sqrt( ( delta_x*delta_x + delta_z*delta_z ) / (obj_r * obj_r) );
+
+	float phi_ = atan2(sin_, delta_y / obj_r); // return (0, pi)
+	coord.y = phi_ / PI;
+
+	return coord;
+}
+
+point bumpMappingPlane(point &v_, point &n_){
+	//suppose bumping function sin(u) + cos(v)
+	point Pu, Pv;
+	Pu.x = 1; Pu.y = 0; Pu.z = 0;
+	Pv.x = 0; Pv.y = 1; Pv.z = 0;
+
+	float bu = 2 * cos(v_.x);
+	float bv = -2 * sin(v_.y);
+	
+	point N_;
+	point dir_1 = cross(Pu, n_);
+	point dir_2 = cross(n_, Pv);
+
+	N_.x = n_.x + bu * dir_1.x + bv * dir_2.x;
+	N_.y = n_.y + bu * dir_1.y + bv * dir_2.y;
+	N_.z = n_.z + bu * dir_1.z + bv * dir_2.z;
+
+	float norm_ = norm(N_);
+	N_.x = N_.x / norm_;
+	N_.y = N_.y / norm_;
+	N_.z = N_.z / norm_;
+
+	return N_;
+}
+
 void mappingFunction(int mapping_method, const char *fileName){
-    GLuint id ;
+
+    GLuint id;
 	// Load image from tga file
 	TGA *TGAImage	= new TGA(fileName);
 	//TGA *TGAImage	= new TGA("./cubicenvironmentmap/cm_right.tga");
@@ -114,11 +239,9 @@ void mappingFunction(int mapping_method, const char *fileName){
 	uint height	= TGAImage->GetHeigth();
 	
 	// The parameters for actual textures are changed
-
 	glGenTextures(1, &id);
 
 	glBindTexture(GL_TEXTURE_2D, id);
-
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 
@@ -129,7 +252,6 @@ void mappingFunction(int mapping_method, const char *fileName){
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
 
 	// Finaly build the mipmaps
 	glTexImage2D (GL_TEXTURE_2D, 0, 4, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, TGAImage->GetPixels());
@@ -146,25 +268,37 @@ void mappingFunction(int mapping_method, const char *fileName){
 
 	for (int i = 0; i < faces; i++)
 	{
-		
+
 		glBegin(GL_TRIANGLES);
 			point v1, v2, v3, n1, n2, n3, coord1,coord2, coord3;
 			v1 = vertList[faceList[i].v1];
 			v2 = vertList[faceList[i].v2];
 			v3 = vertList[faceList[i].v3];
-			n1 = normList[faceList[i].v1];
-			n2 = normList[faceList[i].v2];
-			n3 = normList[faceList[i].v3];
+			n1 = normList[faceList[i].n1];
+			n2 = normList[faceList[i].n2];
+			n3 = normList[faceList[i].n3];
 
 			if (mapping_method == 1)
 			{
 				coord1 = textureCoordCylinder(v1);
 				coord2 = textureCoordCylinder(v2);
 				coord3 = textureCoordCylinder(v3);	
-			}else{
+			}else if(mapping_method == 2){
 				coord1 = textureCoordSphere(v1);
 				coord2 = textureCoordSphere(v2);
 				coord3 = textureCoordSphere(v3);					
+			}else if(mapping_method == 3){
+				coord1 = environmentMapping(v1, n1);
+				coord2 = environmentMapping(v2, n2);
+				coord3 = environmentMapping(v3, n3);	
+			}else if(mapping_method == 4){
+				n1 = bumpMappingPlane(v1, n1);
+				n2 = bumpMappingPlane(v2, n2);
+				n3 = bumpMappingPlane(v3, n3);
+
+				coord1 = textureSphrereNormalmapping(v1, n1);
+				coord2 = textureSphrereNormalmapping(v2, n2);
+				coord3 = textureSphrereNormalmapping(v3, n3);	
 			}
 
 			glNormal3f(n1.x, n1.y, n1.z);
@@ -178,6 +312,7 @@ void mappingFunction(int mapping_method, const char *fileName){
 			glNormal3f(n3.x, n3.y, n3.z);
 			glTexCoord2f (coord3.x, coord3.y);
 			glVertex3f(v3.x, v3.y, v3.z);
+
 		glEnd();
 
 	}	
@@ -206,7 +341,7 @@ void DisplayFunc(void)
 	glEnable(GL_TEXTURE_2D);
 
 	//	setParameters(program);
-	switch(mapping_code % 5)
+	switch(mapping_code % 8)
 	{
 	    case 0:{
             Plane();
@@ -239,7 +374,24 @@ void DisplayFunc(void)
             mappingFunction(2, path5);
             break;
 	    }
-
+	    case 5:{
+	        Sphere();
+            const char *path6 = "./sphericalenvironmentmap/house2.tga";
+            mappingFunction(3, path6);
+            break;
+	    }
+	    case 6:{
+	        Teapot();
+            const char *path7 = "./sphericalenvironmentmap/house2.tga";
+            mappingFunction(3, path7);
+            break;
+	    }
+	    case 7:{
+            Plane();
+            const char *path8 = "./planarbumpmap/abstract2.tga";
+            mappingFunction(4, path8);
+            break;
+	    }
         default:
             break;
 	}
@@ -291,10 +443,6 @@ void MotionFunc(int x, int y)
 
 	glutPostRedisplay();
 }
-
-
-
-
 
 //Motion and camera controls
 void KeyboardFunc(unsigned char key, int x, int y)
@@ -375,11 +523,6 @@ int main(int argc, char **argv)
     glutMotionFunc(MotionFunc);
     glutKeyboardFunc(KeyboardFunc);
 
-	
-	//setShaders();
-	// Teapot();
-	// Sphere();
-	// Plane();
 	glutMainLoop();
 
 	return 0;
@@ -494,7 +637,7 @@ void setShaders()
 	glUseProgramObjectARB(p);
 
 	    
-//	setParameters(p);
+	setParameters(p);
 
 }
 
@@ -700,14 +843,14 @@ void meshReader (char *filename,int sign)
   // Read the faces
 	for(i = 0;i < faces;i++)
     {
-      fscanf(fp,"%c %d %d %d\n",&letter,&ix,&iy,&iz);
-      faceList[i].v1 = ix - 1;
-      faceList[i].v2 = iy - 1;
-      faceList[i].v3 = iz - 1;
+	fscanf(fp,"%c %d %d %d\n",&letter,&ix,&iy,&iz);
+	faceList[i].v1 = ix - 1;
+	faceList[i].v2 = iy - 1;
+	faceList[i].v3 = iz - 1;
 
-		faceList[i].n1 = ix - 1;
-		faceList[i].n2 = iy - 1;
-		faceList[i].n3 = iz - 1;
+	faceList[i].n1 = ix - 1;
+	faceList[i].n2 = iy - 1;
+	faceList[i].n3 = iz - 1;
     }
 	fclose(fp);
 
@@ -739,18 +882,18 @@ void meshReader (char *filename,int sign)
       crossP.y = -crossP.y/len;
       crossP.z = -crossP.z/len;
 
-      normList[faceList[i].v1].x = normList[faceList[i].v1].x + crossP.x;
-      normList[faceList[i].v1].y = normList[faceList[i].v1].y + crossP.y;
-      normList[faceList[i].v1].z = normList[faceList[i].v1].z + crossP.z;
-      normList[faceList[i].v2].x = normList[faceList[i].v2].x + crossP.x;
-      normList[faceList[i].v2].y = normList[faceList[i].v2].y + crossP.y;
-      normList[faceList[i].v2].z = normList[faceList[i].v2].z + crossP.z;
-      normList[faceList[i].v3].x = normList[faceList[i].v3].x + crossP.x;
-      normList[faceList[i].v3].y = normList[faceList[i].v3].y + crossP.y;
-      normList[faceList[i].v3].z = normList[faceList[i].v3].z + crossP.z;
-      normCount[faceList[i].v1]++;
-      normCount[faceList[i].v2]++;
-      normCount[faceList[i].v3]++;
+      normList[faceList[i].n1].x = normList[faceList[i].n1].x + crossP.x;
+      normList[faceList[i].n1].y = normList[faceList[i].n1].y + crossP.y;
+      normList[faceList[i].n1].z = normList[faceList[i].n1].z + crossP.z;
+      normList[faceList[i].n2].x = normList[faceList[i].n2].x + crossP.x;
+      normList[faceList[i].n2].y = normList[faceList[i].n2].y + crossP.y;
+      normList[faceList[i].n2].z = normList[faceList[i].n2].z + crossP.z;
+      normList[faceList[i].n3].x = normList[faceList[i].n3].x + crossP.x;
+      normList[faceList[i].n3].y = normList[faceList[i].n3].y + crossP.y;
+      normList[faceList[i].n3].z = normList[faceList[i].n3].z + crossP.z;
+      normCount[faceList[i].n1]++;
+      normCount[faceList[i].n2]++;
+      normCount[faceList[i].n3]++;
     }
 	for (i = 0;i < verts;i++)
     {
