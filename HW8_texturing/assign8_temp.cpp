@@ -43,6 +43,7 @@ int illimunationMode = 0;
 int shadingMode = 0;
 int lightSource = 0;
 int program=-1;
+GLuint id;
 
 float max_x, min_x, max_y, min_y, max_z, min_z; 
 float obj_h, obj_r, obj_x, obj_y, obj_z;
@@ -51,7 +52,7 @@ float obj_h, obj_r, obj_x, obj_y, obj_z;
 GLfloat ambient_cont [] = {0.19125,0.0735,0.0225};
 GLfloat diffuse_cont [] = {0.7038,0.27048,0.0828};
 GLfloat specular_cont [] = {0.256777,0.137622,0.086014};
-GLfloat exponent = 5000;
+GLfloat ns_ = 5000;
 
 
 //Projection, camera contral related declerations
@@ -227,9 +228,10 @@ point bumpMappingPlane(point &v_, point &n_){
 	return N_;
 }
 
+
+
 void mappingFunction(int mapping_method, const char *fileName){
 
-    GLuint id;
 	// Load image from tga file
 	TGA *TGAImage	= new TGA(fileName);
 	//TGA *TGAImage	= new TGA("./cubicenvironmentmap/cm_right.tga");
@@ -515,13 +517,13 @@ int main(int argc, char **argv)
 	glutInitWindowSize(320,320);
 	glutCreateWindow("Assignment 8");
 
-
-
 	glutDisplayFunc(DisplayFunc);
 	glutReshapeFunc(ReshapeFunc);
 	glutMouseFunc(MouseFunc);
     glutMotionFunc(MotionFunc);
     glutKeyboardFunc(KeyboardFunc);
+
+	setShaders();
 
 	glutMainLoop();
 
@@ -570,7 +572,7 @@ int PrintOGLError(char *file, int line)
 
 void setShaders() 
 {
-
+	glewInit();
 	char *vs = NULL,*fs = NULL;
 
 	//create the empty shader objects and get their handles
@@ -579,8 +581,8 @@ void setShaders()
 	
 
 	//read the shader files and store the strings in corresponding char. arrays.
-	vs = shaderFileRead("sampleshader.vert");
-	fs = shaderFileRead("sampleshader.frag");
+	vs = shaderFileRead("texture_shader.vert");
+	fs = shaderFileRead("texture_shader.frag");
 
 	const char * vv = vs;
 	const char * ff = fs;
@@ -682,23 +684,16 @@ void setParameters(GLuint program)
 
 	update_Light_Position();
 
-	//Access uniform variables in shaders
-	ambient_loc = getUniformVariable(program, "AmbientContribution");	
-	glUniform3fvARB(ambient_loc,1, ambient_cont);
+	GLint locns = glGetUniformLocation(program, "ns_");
+	if (locns == -1)
+        std::cout << "Warning: can't find uniform variable ns_ !\n";
+    glUniform1f(locns, ns_);
 
-	diffuse_loc = getUniformVariable(program, "DiffuseContribution");
-	glUniform3fvARB(diffuse_loc,1, diffuse_cont);
+	GLint loc = glGetUniformLocation(program, "texture");
 
-	specular_loc = getUniformVariable(program, "SpecularContribution");
-	glUniform3fvARB(specular_loc,1,specular_cont);
-
-	exponent_loc = getUniformVariable(program, "exponent");
-	glUniform1fARB(exponent_loc,exponent);
-
-	//Access attributes in vertex shader
-	tangent_loc = glGetAttribLocationARB(program,"tang");
-	glVertexAttrib1fARB(tangent_loc,tangent);
-
+	if (loc == -1)
+        std::cout << "Warning: can't find uniform variable texture !\n";
+    glUniform1f(loc, id);
 }
 
 

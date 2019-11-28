@@ -35,7 +35,6 @@ void main(void)
    vec3 color = (AmbientComponent() + DiffuseComponent()) +
                 SpecularComponent();  
    // Final color
-   
-   
+
    gl_FragColor = vec4(color, 1.0);
 }
