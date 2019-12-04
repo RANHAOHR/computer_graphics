@@ -689,7 +689,7 @@ void setParameters(GLuint program)
         std::cout << "Warning: can't find uniform variable ns_ !\n";
     glUniform1f(locns, ns_);
 
-	GLint loc = glGetUniformLocation(program, "texture");
+	GLint loc = glGetUniformLocation(program, "texSampler");
 
 	if (loc == -1)
         std::cout << "Warning: can't find uniform variable texture !\n";
