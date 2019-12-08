@@ -20,7 +20,7 @@ void main()
    vec4 Iamb = gl_FrontLightProduct[0].ambient; 
 
    // Output color = color of the texture at the specified UV
-  vec4 Idiff = texture2D( texSampler, gl_TexCoord[0].st );
+  vec4 Idiff = texture2D( texSampler, gl_TexCoord[0].st ) * max(dot(N_, L_), 0.0);
 
    // calculate Specular Term:
   vec4 Ispec = gl_FrontLightProduct[0].specular * pow(max(dot(H_,V_),0.0), ns_);
